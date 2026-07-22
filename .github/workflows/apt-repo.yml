@@ -14,7 +14,7 @@ jobs:
       id-token: write
 
     steps:
-      - name: Checkout local repo
+      - name: Checkout local repo (r-nacos-apt)
         uses: actions/checkout@v4
 
       - name: Import GPG Key
@@ -22,7 +22,7 @@ jobs:
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
 
-      - name: Fetch Latest r-nacos Release Info
+      - name: Fetch Latest r-nacos Release Tag
         id: get_release
         run: |
           # 获取官方最新 release tag (如 v0.8.5)
@@ -31,27 +31,33 @@ jobs:
           # 去掉 tag 前面的 v 字母，获取纯版本号 (如 0.8.5)
           echo "VERSION=${LATEST_TAG#v}" >> $GITHUB_OUTPUT
 
-      - name: Setup APT Workspace
+      - name: Clone r-nacos Source Code
+        uses: actions/checkout@v4
+        with:
+          repository: nacos-group/r-nacos
+          ref: ${{ steps.get_release.outputs.tag }}
+          path: r-nacos-src
+
+      - name: Build r-nacos with Cargo
         run: |
+          cd r-nacos-src
+          cargo build --release
+
+      - name: Setup APT Workspace & Package .deb
+        run: |
+          VERSION="${{ steps.get_release.outputs.VERSION }}"
+          
+          # 创建目录结构
           mkdir -p public/pool/main/r/r-nacos
           mkdir -p public/dists/stable/main/binary-amd64
           mkdir -p deb-build/DEBIAN
           mkdir -p deb-build/usr/bin
 
-      - name: Download and Build .deb Package
-        run: |
-          VERSION="${{ steps.get_release.outputs.VERSION }}"
-          TAG="${{ steps.get_release.outputs.tag }}"
-          
-          # 1. 下载 r-nacos 官方发布的 Linux x86_64 压缩包
-          curl -L "https://github.com/nacos-group/r-nacos/releases/download/${TAG}/r-nacos-linux-x86_64.tgz" -o r-nacos.tgz
-          
-          # 2. 解压并将可执行程序放进打包目录
-          tar -xzf r-nacos.tgz
-          mv r-nacos deb-build/usr/bin/
+          # 复制编译好的二进制文件
+          cp r-nacos-src/target/release/r-nacos deb-build/usr/bin/r-nacos
           chmod +x deb-build/usr/bin/r-nacos
 
-          # 3. 创建 debian 控制文件
+          # 创建 debian 控制文件
           cat <<EOF > deb-build/DEBIAN/control
           Package: r-nacos
           Version: ${VERSION}
@@ -60,12 +66,11 @@ jobs:
           Description: Rapid Nacos server implementation in Rust.
           EOF
 
-          # 4. 压制为 .deb 包并放入 pool 目录
+          # 压制为 .deb 包并放入 pool 目录
           dpkg-deb --build deb-build "public/pool/main/r/r-nacos/r-nacos_${VERSION}_amd64.deb"
 
       - name: Export Public GPG Key
         run: |
-          # 将导入的公钥导出到 public 目录下，供客户端下载导入
           gpg --armor --export > public/KEY.gpg
 
       - name: Generate APT Indexes
@@ -91,7 +96,7 @@ jobs:
           # 计算 Packages 等文件的 Hash 并附加到 Release 文件尾部
           apt-ftparchive release . >> Release
 
-          # 3. 使用 GPG 私钥对 Release 进行签名（生成 InRelease 和 Release.gpg）
+          # 3. 使用 GPG 私钥对 Release 进行签名
           gpg --yes --clearsign -o InRelease Release
           gpg --yes -abs -o Release.gpg Release
 
