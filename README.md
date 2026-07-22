@@ -55,6 +55,46 @@ r-nacos                # 以默认配置启动 r-nacos 服务
 
 ---
 
+## 🔄 更新 r-nacos
+
+本仓库每天 UTC 02:00 自动拉取上游最新版本并重新打包，所以「更新」就是刷新 apt 索引后升级。
+
+### 常规更新
+
+```bash
+sudo apt update
+sudo apt upgrade r-nacos          # 等价于 sudo apt install r-nacos
+```
+
+### 查看版本
+
+```bash
+r-nacos --version                 # 当前安装的版本
+
+apt list -a r-nacos               # 仓库中可用的版本（apt update 之后）
+```
+
+### 更新须知
+
+- **新版本还没出现？** 上游刚发布的 release，本仓库最快次日 UTC 02:00 之后才入库。急着用可去 [Actions 页面](https://github.com/qyzhg/r-nacos-apt/actions/workflows/apt-repo.yml) 手动点一次 `Run workflow` 立即触发。
+- **数据与配置不会丢。** `.deb` 包内只含一个二进制 `/usr/bin/r-nacos`，你的配置（环境变量 / `.env`）和数据目录都不在包里，`apt upgrade` 只替换二进制，不会动它们。
+- **升级前建议备份。** 跨大版本升级时，推荐先备份 r-nacos 的数据目录再执行升级，方便回滚。
+
+<details>
+<summary><b>需要回滚到旧版本？</b></summary>
+
+APT 索引只登记最新版本，`apt install r-nacos=<旧版本号>` 通常会报 "not found"。但历史 `.deb` 仍保留在 pool 里，可直接用 `dpkg -i` 安装指定版本：
+
+```bash
+# 将 <version> 与 <arch> 替换为你需要的值，例如 0.8.4 / amd64
+wget https://qyzhg.github.io/r-nacos-apt/pool/main/r/r-nacos/r-nacos_<version>_<arch>.deb
+sudo dpkg -i r-nacos_<version>_<arch>.deb
+```
+
+</details>
+
+---
+
 ## 🔑 GPG 公钥
 
 | 字段 | 值 |

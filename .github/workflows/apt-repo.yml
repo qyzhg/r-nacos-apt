@@ -92,7 +92,8 @@ jobs:
           cd public
 
           # 1. 扫描 pool 生成包含全部架构的 Packages，再按 Architecture 字段拆分到各自的索引目录
-          dpkg-scanpackages pool/ /dev/null > /tmp/Packages.all
+          #    --multiversion 必须加：两个 deb 的 Package 名都是 r-nacos，不加会被当成重复而丢掉其中一个架构
+          dpkg-scanpackages --multiversion pool/ /dev/null > /tmp/Packages.all
           awk 'BEGIN{RS=""; ORS="\n\n"} /Architecture: amd64/' /tmp/Packages.all > dists/stable/main/binary-amd64/Packages
           awk 'BEGIN{RS=""; ORS="\n\n"} /Architecture: arm64/' /tmp/Packages.all > dists/stable/main/binary-arm64/Packages
           gzip -k -f dists/stable/main/binary-amd64/Packages
