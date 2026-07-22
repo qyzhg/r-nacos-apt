@@ -1,0 +1,24 @@
+Origin: qyzhg APT Repository
+Label: r-nacos Repo
+Suite: stable
+Codename: stable
+Architectures: amd64
+Components: main
+Description: APT repository for r-nacos
+Date: Wed, 22 Jul 2026 07:21:36 +0000
+MD5Sum:
+ 958583ce919f0d27ed762d389a5903e2              196 Release
+ 3ffa04a02f656028f114cbf8bec8e32a              375 main/binary-amd64/Packages
+ ce9fc9e8d96124e3348df1118a93962a              304 main/binary-amd64/Packages.gz
+SHA1:
+ 0af5d901ae1e4bb32d717b4ce45dd46638ade317              196 Release
+ e6275cdd8c7c26237f60cbb72182a3577c230e09              375 main/binary-amd64/Packages
+ 05cf9870355f539caeb43bd6b4eff57c4e713a72              304 main/binary-amd64/Packages.gz
+SHA256:
+ 148abaf0283a73880a4134a792d571960be54e5fa3b6deb057ece6e8ccf01342              196 Release
+ 7aa1c96425d1107e8e47273909b3bf8ced006d3647ddfaf8ad99a467378ee827              375 main/binary-amd64/Packages
+ 6ee19fd9f5967ad913badb26065a86dcb760570a9a4cbb490258c117f2a9be6e              304 main/binary-amd64/Packages.gz
+SHA512:
+ 2fc4de1bcd9d2c83d4d391d4bf443e0cd95c225d89dd25aeda77fa9c287051c974752c051bfbbc3a8f8e084d4b7ca299d2d8ba17b0b809256c7eef600f64b338              196 Release
+ c52fd6daf95080a72f8e4c6ab0d4a82e36ed1d18053c2502e78c9bf73655055b10a18ad6018997968ba32f1ee05476afb4fa1cc3add59900896de793f9d054c8              375 main/binary-amd64/Packages
+ 9ef33039de5833057ed59a55d6a71d4b1c3cf379daf061470029318f255c48f8e161fd1f213adc38ad062412b68aa429e7500e96fea2cc3281cde57c79caab3e              304 main/binary-amd64/Packages.gz
