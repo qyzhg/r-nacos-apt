@@ -53,8 +53,8 @@ jobs:
           mkdir -p deb-build/DEBIAN
           mkdir -p deb-build/usr/bin
 
-          # 复制编译好的二进制文件
-          cp r-nacos-src/target/release/r-nacos deb-build/usr/bin/r-nacos
+          # 复制编译好的二进制文件（修正源文件名 rnacos）
+          cp r-nacos-src/target/release/rnacos deb-build/usr/bin/r-nacos
           chmod +x deb-build/usr/bin/r-nacos
 
           # 创建 debian 控制文件
