@@ -16,6 +16,7 @@
 - 🔏 **GPG 签名**：所有 `Release` / `InRelease` 索引均经签名，`apt` 可校验完整性。
 - 📦 **零依赖二进制**：由 `cargo build --release` 产出静态精简二进制，安装即用。
 - 🖥️ **双架构**：同时构建 `amd64` 与 `arm64`(aarch64) 两套 `.deb`，x86 服务器与 ARM（树莓派、AWS Graviton 等）都能直接装。
+- 🔌 **内置 systemd 服务**：`.deb` 自带 unit 与安装脚本，`apt install` 即自动注册、开机自启并运行，无需手动配置。
 - 🚀 **手动触发**：在 Actions 页面可随时 `workflow_dispatch` 手动重建。
 - 🧩 **标准 APT 布局**：`pool/` + `dists/stable/main/binary-amd64/`，兼容所有 `apt` 客户端。
 
@@ -45,13 +46,16 @@ r-nacos --version      # 查看版本
 which r-nacos          # /usr/bin/r-nacos
 ```
 
-直接运行：
+服务由 systemd 托管（安装时已自动启动），验证：
 
 ```bash
-r-nacos                # 以默认配置启动 r-nacos 服务
+sudo systemctl status r-nacos # 应为 active (running)
+ss -lntp | grep 8848          # 确认 HTTP 端口在监听
 ```
 
-更多运行参数与配置（数据库、集群、控制台端口等）请参考 [r-nacos 官方文档](https://github.com/nacos-group/r-nacos#readme)。
+控制台：浏览器访问 `http://<服务器IP>:10848/rnacos/`，默认账号 `admin / admin`（**登录后请立即修改密码**）。
+
+服务管理、改端口 / 数据目录 / 环境变量等见下方「🖥️ 服务管理（systemd）」一节。更多运行参数请参考 [r-nacos 官方文档](https://github.com/nacos-group/r-nacos#readme)。
 
 ---
 
@@ -113,7 +117,7 @@ apt list -a r-nacos               # 仓库中可用的版本（apt update 之后
 ### 更新须知
 
 - **新版本还没出现？** 上游刚发布的 release，本仓库最快次日 UTC 02:00 之后才入库。急着用可去 [Actions 页面](https://github.com/qyzhg/r-nacos-apt/actions/workflows/apt-repo.yml) 手动点一次 `Run workflow` 立即触发。
-- **数据与配置不会丢。** `.deb` 包内只含一个二进制 `/usr/bin/r-nacos`，你的配置（环境变量 / `.env`）和数据目录都不在包里，`apt upgrade` 只替换二进制，不会动它们。
+- **数据与配置不会丢。** 你的数据目录（`/var/lib/r-nacos`）和 `systemctl edit` 的 drop-in 配置都不在包里，`apt upgrade` 只更新二进制与 unit，不会动你的数据与自定义配置。
 - **升级前建议备份。** 跨大版本升级时，推荐先备份 r-nacos 的数据目录再执行升级，方便回滚。
 
 <details>
@@ -128,6 +132,60 @@ sudo dpkg -i r-nacos_<version>_<arch>.deb
 ```
 
 </details>
+
+---
+
+## 🖥️ 服务管理（systemd）
+
+`.deb` 内置 systemd unit 与安装脚本：`apt install` / `apt upgrade` 时会**自动创建运行用户、注册、启用并启动**服务（开机自启），无需手动配置。
+
+### 常用命令
+
+```bash
+sudo systemctl status r-nacos        # 查看状态（应为 active (running)）
+sudo systemctl restart r-nacos       # 重启（改完配置后）
+sudo systemctl stop r-nacos          # 停止
+sudo systemctl start r-nacos         # 启动
+sudo systemctl disable r-nacos       # 取消开机自启（安装时已默认 enable）
+sudo journalctl -u r-nacos -f        # 实时查看日志
+```
+
+### 默认运行配置
+
+| 项 | 值 |
+| --- | --- |
+| 运行用户 | `rnacos`（安装时自动创建） |
+| HTTP / gRPC / 控制台端口 | `8848` / `9848` / `10848` |
+| 数据目录 | `/var/lib/r-nacos/nacos_db` |
+| 日志等级 | `info`（`RUST_LOG`） |
+| 时区 | 东 8 区（`RNACOS_GMT_OFFSET_HOURS=8`） |
+| 崩溃自重启 | `Restart=on-failure` |
+
+### 自定义配置（端口 / 数据目录 / 环境变量）
+
+**不要直接改 unit 文件**（升级时会被覆盖），用 drop-in 覆盖：
+
+```bash
+sudo systemctl edit r-nacos
+```
+
+在打开的编辑器里追加（示例：改 HTTP 端口 + 初始化管理员密码）：
+
+```ini
+[Service]
+Environment=RNACOS_HTTP_PORT=18848
+Environment=RNACOS_INIT_ADMIN_PASSWORD=your-strong-password
+```
+
+保存后重启生效：
+
+```bash
+sudo systemctl restart r-nacos
+```
+
+> `RNACOS_INIT_ADMIN_PASSWORD` 仅在**首次初始化**时生效；若已用默认 `admin/admin` 启动过，改它不会重置密码，请到控制台修改。
+
+完整参数列表见 [r-nacos 运行参数说明](https://r-nacos.github.io/docs/notes/env_config/)。
 
 ---
 
