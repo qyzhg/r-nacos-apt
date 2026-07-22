@@ -38,36 +38,50 @@ jobs:
           ref: ${{ steps.get_release.outputs.tag }}
           path: r-nacos-src
 
-      - name: Build r-nacos with Cargo
+      - name: Install aarch64 Cross Toolchain
+        run: |
+          # 安装 aarch64 交叉编译工具链（gcc + binutils，含 ar/strip）
+          # r-nacos 唯一的 C 依赖是 rusqlite(bundled)，会通过 cc-rs 自动选用下列环境变量
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+          rustup target add aarch64-unknown-linux-gnu
+
+      - name: Build r-nacos (amd64 + arm64)
         run: |
           cd r-nacos-src
+          # amd64: 原生编译
           cargo build --release
+          # arm64: 交叉编译到 aarch64-unknown-linux-gnu
+          export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc
+          export CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc
+          export CXX_aarch64_unknown_linux_gnu=aarch64-linux-gnu-g++
+          export AR_aarch64_unknown_linux_gnu=aarch64-linux-gnu-ar
+          cargo build --release --target aarch64-unknown-linux-gnu
 
       - name: Setup APT Workspace & Package .deb
         run: |
           VERSION="${{ steps.get_release.outputs.VERSION }}"
-          
-          # 创建目录结构
+
+          # 创建目录结构（同时支持 amd64 与 arm64 两套架构索引）
           mkdir -p public/pool/main/r/r-nacos
           mkdir -p public/dists/stable/main/binary-amd64
-          mkdir -p deb-build/DEBIAN
-          mkdir -p deb-build/usr/bin
+          mkdir -p public/dists/stable/main/binary-arm64
 
-          # 复制编译好的二进制文件（修正源文件名 rnacos）
-          cp r-nacos-src/target/release/rnacos deb-build/usr/bin/r-nacos
-          chmod +x deb-build/usr/bin/r-nacos
+          # 打包函数：$1=架构 $2=编译产物路径
+          make_deb () {
+            local ARCH="$1"
+            local BIN="$2"
+            rm -rf deb-build
+            mkdir -p deb-build/DEBIAN deb-build/usr/bin
+            cp "$BIN" deb-build/usr/bin/r-nacos
+            chmod +x deb-build/usr/bin/r-nacos
+            printf 'Package: r-nacos\nVersion: %s\nArchitecture: %s\nMaintainer: qyzhg <qyzhg@qyzhg.com>\nDescription: Rapid Nacos server implementation in Rust.\n' \
+              "$VERSION" "$ARCH" > deb-build/DEBIAN/control
+            dpkg-deb --build deb-build "public/pool/main/r/r-nacos/r-nacos_${VERSION}_${ARCH}.deb"
+          }
 
-          # 创建 debian 控制文件
-          cat <<EOF > deb-build/DEBIAN/control
-          Package: r-nacos
-          Version: ${VERSION}
-          Architecture: amd64
-          Maintainer: qyzhg <qyzhg@qyzhg.com>
-          Description: Rapid Nacos server implementation in Rust.
-          EOF
-
-          # 压制为 .deb 包并放入 pool 目录
-          dpkg-deb --build deb-build "public/pool/main/r/r-nacos/r-nacos_${VERSION}_amd64.deb"
+          make_deb amd64 r-nacos-src/target/release/rnacos
+          make_deb arm64 r-nacos-src/target/aarch64-unknown-linux-gnu/release/rnacos
 
       - name: Export Public GPG Key
         run: |
@@ -76,19 +90,22 @@ jobs:
       - name: Generate APT Indexes
         run: |
           cd public
-          
-          # 1. 扫描 pool 生成 Packages 索引文件
-          dpkg-scanpackages pool/ /dev/null > dists/stable/main/binary-amd64/Packages
-          gzip -k -f dists/stable/main/binary-amd64/Packages
 
-          # 2. 生成 Release 元数据文件
+          # 1. 扫描 pool 生成包含全部架构的 Packages，再按 Architecture 字段拆分到各自的索引目录
+          dpkg-scanpackages pool/ /dev/null > /tmp/Packages.all
+          awk 'BEGIN{RS=""; ORS="\n\n"} /Architecture: amd64/' /tmp/Packages.all > dists/stable/main/binary-amd64/Packages
+          awk 'BEGIN{RS=""; ORS="\n\n"} /Architecture: arm64/' /tmp/Packages.all > dists/stable/main/binary-arm64/Packages
+          gzip -k -f dists/stable/main/binary-amd64/Packages
+          gzip -k -f dists/stable/main/binary-arm64/Packages
+
+          # 2. 生成 Release 元数据文件（Architectures 同时列出两套架构）
           cd dists/stable
           cat <<EOF > Release
           Origin: qyzhg APT Repository
           Label: r-nacos Repo
           Suite: stable
           Codename: stable
-          Architectures: amd64
+          Architectures: amd64 arm64
           Components: main
           Description: APT repository for r-nacos
           EOF
