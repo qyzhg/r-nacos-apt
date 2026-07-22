@@ -55,6 +55,42 @@ r-nacos                # 以默认配置启动 r-nacos 服务
 
 ---
 
+## 🇨🇳 国内用户（大陆镜像）
+
+`qyzhg.github.io` 在国内大陆经常被重置（RST），`curl` / `apt` 会失败。已用 Cloudflare 搭了一个国内可达的镜像 **`https://rnacos-img.qyzhg.cc`**——内容和官方源完全一致、同样支持自动更新。
+
+国内服务器把安装命令里的域名换成镜像即可（**公钥不变，和上面一样**）：
+
+```bash
+# 1. 下载并导入 GPG 公钥（走镜像，国内可达）
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://rnacos-img.qyzhg.cc/KEY.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/r-nacos.gpg
+
+# 2. 添加 APT 源（域名换成镜像）
+echo "deb [signed-by=/etc/apt/keyrings/r-nacos.gpg] https://rnacos-img.qyzhg.cc stable main" | sudo tee /etc/apt/sources.list.d/r-nacos.list
+
+# 3. 更新并安装 r-nacos
+sudo apt update
+sudo apt install r-nacos
+```
+
+后续升级同样走镜像：`sudo apt update && sudo apt upgrade r-nacos`。和官方源完全等价，`apt update` 能正常跟新版。
+
+<details>
+<summary><b>镜像偶尔也不稳时的备选（jsDelivr）</b></summary>
+
+若 Cloudflare 镜像在某台机器上也不通，可用 jsDelivr（国内有节点）顶一下，把上面命令里的域名换成：
+
+```
+https://cdn.jsdelivr.net/gh/qyzhg/r-nacos-apt@gh-pages
+```
+
+注意：jsDelivr 偶尔会出现索引缓存不一致（`InRelease` 和 `Packages` 哈希对不上，导致 `apt install` 报找不到包）。遇到时把 `@gh-pages` 换成具体的 commit（到 [gh-pages 分支提交记录](https://github.com/qyzhg/r-nacos-apt/commits/gh-pages) 复制最新 commit SHA）即可恢复，代价是该源不会自动跟新版。**日常优先用上面的 Cloudflare 镜像。**
+
+</details>
+
+---
+
 ## 🔄 更新 r-nacos
 
 本仓库每天 UTC 02:00 自动拉取上游最新版本并重新打包，所以「更新」就是刷新 apt 索引后升级。
