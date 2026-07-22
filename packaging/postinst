@@ -1,0 +1,28 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "configure" ]; then
+    # 建专用系统用户（幂等）
+    if ! id -u rnacos >/dev/null 2>&1; then
+        useradd --system --no-create-home --home /var/lib/r-nacos --shell /usr/sbin/nologin rnacos
+    fi
+
+    # 数据目录
+    mkdir -p /var/lib/r-nacos/nacos_db
+    chown -R rnacos:rnacos /var/lib/r-nacos
+
+    # 注册并启动 systemd 服务
+    if command -v systemctl >/dev/null 2>&1; then
+        systemctl daemon-reload || true
+        systemctl enable r-nacos.service || true
+        if [ -n "$2" ]; then
+            # 升级：重启加载新二进制
+            systemctl restart r-nacos.service || true
+        else
+            # 全新安装：启动
+            systemctl start r-nacos.service || true
+        fi
+    fi
+fi
+
+exit 0

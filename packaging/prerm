@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+
+# 仅在 remove/deconfigure 时停止；升级时不在此停（由新版 postinst restart）
+if [ "$1" = "remove" ] || [ "$1" = "deconfigure" ]; then
+    if command -v systemctl >/dev/null 2>&1; then
+        systemctl stop r-nacos.service || true
+    fi
+fi
+
+exit 0

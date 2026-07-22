@@ -29,7 +29,10 @@ jobs:
           LATEST_TAG=$(curl -s https://api.github.com/repos/nacos-group/r-nacos/releases/latest | jq -r .tag_name)
           echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
           # 去掉 tag 前面的 v 字母，获取纯版本号 (如 0.8.5)
-          echo "VERSION=${LATEST_TAG#v}" >> $GITHUB_OUTPUT
+          UPSTREAM="${LATEST_TAG#v}"
+          # 末尾追加本仓库(r-nacos-apt)的短 commit hash：每次改了打包/工作流版本号都会变，
+          # 已装的用户可通过 apt upgrade 拉到新包（0.8.5+<sha> 比 0.8.5 新）
+          echo "VERSION=${UPSTREAM}+${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
 
       - name: Clone r-nacos Source Code
         uses: actions/checkout@v4

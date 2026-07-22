@@ -1,0 +1,22 @@
+[Unit]
+Description=r-nacos (Rust Nacos server)
+Documentation=https://github.com/nacos-group/r-nacos
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=rnacos
+Group=rnacos
+WorkingDirectory=/var/lib/r-nacos
+Environment=RNACOS_HTTP_PORT=8848
+Environment=RNACOS_DATA_DIR=/var/lib/r-nacos/nacos_db
+Environment=RNACOS_GMT_OFFSET_HOURS=8
+Environment=RUST_LOG=info
+ExecStart=/usr/bin/r-nacos
+Restart=on-failure
+RestartSec=5s
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
