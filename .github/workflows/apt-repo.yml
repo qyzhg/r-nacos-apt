@@ -1,0 +1,98 @@
+name: Update APT Repository
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # 每天凌晨 2 点自动运行
+  workflow_dispatch: # 支持手动点击触发
+
+jobs:
+  build-apt:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Checkout local repo
+        uses: actions/checkout@v4
+
+      - name: Import GPG Key
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+
+      - name: Fetch Latest r-nacos Release Info
+        id: get_release
+        run: |
+          LATEST_TAG=$(curl -s https://api.github.com/repos/nacos-group/r-nacos/releases/latest | jq -r .tag_name)
+          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "VERSION=${LATEST_TAG#v}" >> $GITHUB_OUTPUT
+
+      - name: Setup APT Workspace
+        run: |
+          mkdir -p public/pool/main/r/r-nacos
+          mkdir -p public/dists/stable/main/binary-amd64
+          mkdir -p deb-build/DEBIAN
+          mkdir -p deb-build/usr/bin
+          mkdir -p deb-build/lib/systemd/system
+
+      - name: Download and Build .deb Package
+        run: |
+          VERSION="${{ steps.get_release.outputs.VERSION }}"
+          TAG="${{ steps.get_release.outputs.tag }}"
+          
+          # 下载 x86_64 版本的 r-nacos
+          curl -L "https://github.com/nacos-group/r-nacos/releases/download/${TAG}/r-nacos-x86_64-unknown-linux-musl.tar.gz" -o r-nacos.tar.gz
+          tar -xzf r-nacos.tar.gz -C deb-build/usr/bin/
+          chmod +x deb-build/usr/bin/r-nacos
+
+          # 创建 debian control 文件
+          cat <<EOF > deb-build/DEBIAN/control
+          Package: r-nacos
+          Version: ${VERSION}
+          Architecture: amd64
+          Maintainer: Your Name <your.email@example.com>
+          Description: Rapid Nacos server implementation in Rust.
+          EOF
+
+          # 构建 deb 包并移动到 pool 目录
+          dpkg-deb --build deb-build "public/pool/main/r/r-nacos/r-nacos_${VERSION}_amd64.deb"
+
+      - name: Export Public GPG Key
+        run: |
+          gpg --armor --export > public/KEY.gpg
+
+      - name: Generate APT Indexes
+        run: |
+          cd public
+          
+          # 1. 生成 Packages 索引
+          dpkg-scanpackages pool/ /dev/null > dists/stable/main/binary-amd64/Packages
+          gzip -k -f dists/stable/main/binary-amd64/Packages
+
+          # 2. 生成 Release 文件
+          cd dists/stable
+          cat <<EOF > Release
+          Origin: My APT Repository
+          Label: r-nacos Repo
+          Suite: stable
+          Codename: stable
+          Architectures: amd64
+          Components: main
+          Description: APT repository for r-nacos
+          EOF
+
+          # 计算哈希填入 Release
+          apt-ftparchive release . >> Release
+
+          # 3. 对 Release 签名
+          gpg --yes --clearsign -o InRelease Release
+          gpg --yes -abs -o Release.gpg Release
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          keep_files: true
