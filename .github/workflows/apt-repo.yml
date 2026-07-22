@@ -72,12 +72,18 @@ jobs:
             local ARCH="$1"
             local BIN="$2"
             rm -rf deb-build
-            mkdir -p deb-build/DEBIAN deb-build/usr/bin
+            mkdir -p deb-build/DEBIAN deb-build/usr/bin deb-build/lib/systemd/system
             cp "$BIN" deb-build/usr/bin/r-nacos
             chmod +x deb-build/usr/bin/r-nacos
-            printf 'Package: r-nacos\nVersion: %s\nArchitecture: %s\nMaintainer: qyzhg <qyzhg@qyzhg.com>\nDescription: Rapid Nacos server implementation in Rust.\n' \
+            printf 'Package: r-nacos\nVersion: %s\nArchitecture: %s\nSection: net\nPriority: optional\nMaintainer: qyzhg <qyzhg@qyzhg.com>\nDescription: Rapid Nacos server implementation in Rust.\n' \
               "$VERSION" "$ARCH" > deb-build/DEBIAN/control
-            dpkg-deb --build deb-build "public/pool/main/r/r-nacos/r-nacos_${VERSION}_${ARCH}.deb"
+            # 内置 systemd unit + maintainer 脚本：apt 装完即可 systemctl start r-nacos
+            cp packaging/r-nacos.service deb-build/lib/systemd/system/
+            cp packaging/postinst deb-build/DEBIAN/postinst
+            cp packaging/prerm     deb-build/DEBIAN/prerm
+            cp packaging/postrm    deb-build/DEBIAN/postrm
+            chmod 0755 deb-build/DEBIAN/postinst deb-build/DEBIAN/prerm deb-build/DEBIAN/postrm
+            dpkg-deb --build --root-owner-group deb-build "public/pool/main/r/r-nacos/r-nacos_${VERSION}_${ARCH}.deb"
           }
 
           make_deb amd64 r-nacos-src/target/release/rnacos
