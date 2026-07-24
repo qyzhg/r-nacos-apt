@@ -30,11 +30,12 @@ jobs:
           # 获取官方最新 release tag (如 v0.8.5)
           LATEST_TAG=$(curl -s https://api.github.com/repos/nacos-group/r-nacos/releases/latest | jq -r .tag_name)
           echo "tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
-          # 去掉 tag 前面的 v 字母，获取纯版本号 (如 0.8.5)
+          # 去掉 tag 前面的 v 字母，用纯上游版本号作为包版本（如 0.8.5）。
+          # 这样 apt install rnacos=0.8.5 能精确匹配历史版本。
+          # 代价：只改了打包脚本而上游没发新版时，已装用户需 apt install --reinstall rnacos 才拿到新打包
+          # （不再靠 +sha 自动 bump）；打包改动改为手动 force 重建、覆盖同名 .deb。
           UPSTREAM="${LATEST_TAG#v}"
-          # 末尾追加本仓库(r-nacos-apt)的短 commit hash：每次改了打包/工作流版本号都会变，
-          # 已装的用户可通过 apt upgrade 拉到新包（0.8.5+<sha> 比 0.8.5 新）
-          echo "version=${UPSTREAM}+${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          echo "version=${UPSTREAM}" >> "$GITHUB_OUTPUT"
 
       - name: Check if Version Already Published
         id: check_version
@@ -151,6 +152,22 @@ jobs:
       - name: Export Public GPG Key
         run: |
           gpg --armor --export > public/KEY.gpg
+
+      - name: Merge historical .deb pool from gh-pages
+        run: |
+          # 把 gh-pages 上累积的历史 .deb 合并进本次 public/pool/，让下面的索引登记全部版本，
+          # 这样 apt install rnacos=<旧版本> 可直接装（不只最新版）。首次发布（无 gh-pages）则跳过。
+          if ! git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            echo "gh-pages 尚不存在（首次发布）→ 无历史可合并。"
+            exit 0
+          fi
+          git clone --depth=1 -b gh-pages origin /tmp/gh-pages 2>/dev/null
+          if [ -d /tmp/gh-pages/pool ]; then
+            # -n(no-clobber)：绝不覆盖本次刚构建好的 .deb，只补入历史版本
+            cp -an /tmp/gh-pages/pool/. public/pool/ 2>/dev/null || true
+            echo "已合并历史 pool，当前 pool 内全部 deb："
+            ls -1 public/pool/main/r/rnacos/
+          fi
 
       - name: Generate APT Indexes
         run: |
