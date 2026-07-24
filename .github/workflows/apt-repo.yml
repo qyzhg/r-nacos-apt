@@ -189,3 +189,35 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
           keep_files: true
+
+  # 第三步：把累积的 gh-pages 镜像到 Cloudflare Pages（给大陆用户加速）。
+  # 单独成 job + 只给 contents:read —— 让长生命周期、最敏感的 CF API Token
+  # 只暴露在这个最小权限的 job 里：即便 pages-action 被攻陷，也碰不到你的分支 / GitHub Pages / OIDC。
+  mirror-to-cloudflare:
+    name: Mirror to Cloudflare Pages (best-effort)
+    needs: build-apt
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read            # 只需读 gh-pages；CF 上传走 CF API Token，不依赖 GITHUB_TOKEN 权限
+    # GitHub Actions 限制：if 条件（job/step 级都是）里一律不能引用 secrets，否则报 Unrecognized named-value: 'secrets'。
+    # 所以不做「secret 是否配置」的预判，改用 continue-on-error 兜底：CF 端失败 / secret 缺失都只显示黄色警告，
+    # 整个 workflow 仍判绿，主流程（GitHub Pages）不受影响。
+    if: ${{ needs.build-apt.result == 'success' }}
+    steps:
+      - name: Checkout full gh-pages (cumulative)
+        uses: actions/checkout@v4
+        continue-on-error: true   # gh-pages 拉取失败也不让 workflow 变红
+        with:
+          ref: gh-pages
+          path: cf-mirror
+
+      - name: Mirror to Cloudflare Pages
+        if: ${{ hashFiles('cf-mirror/dists/stable/InRelease') != '' }}   # 目录为空绝不部署，避免把 CF 站清空
+        uses: cloudflare/pages-action@v1
+        continue-on-error: true   # CF 端失败不影响整个 workflow：build-apt 已绿 = 主流程成功
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: rnacos-apt   # 必须与你在 CF 上建的 Pages 项目名一致，不一致就改这里
+          directory: cf-mirror
+          branch: main              # Pages 据此判定 production 部署；项目里 production branch 也要设成 main
