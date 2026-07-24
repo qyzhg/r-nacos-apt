@@ -5,10 +5,10 @@ Maintainer: qyzhg <qyzhg@qyzhg.com>
 Conflicts: r-nacos
 Replaces: r-nacos
 Filename: pool/main/r/rnacos/rnacos_0.8.5_amd64.deb
-Size: 11641440
-MD5sum: e336cc73d45ee9bb1a78c3e7e938c19d
-SHA1: 592a0dc0cb186a261905bbcc24833c4f7860558d
-SHA256: d9c0884c2c2032fb1eb02962eb11a4d36022d201a22ecfb983e71614ce621db6
+Size: 11659982
+MD5sum: a26551a5af3f2a64b488198c6dd37da6
+SHA1: 55c357ec528ae3da24c80ee337ad6cced284679a
+SHA256: 440e965eeb05012b4eacfc8fb7b706ce5315e69a97d019a5de8390c093c65c2f
 Section: net
 Priority: optional
 Description: Rapid Nacos server implementation in Rust.
