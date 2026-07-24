@@ -1,0 +1,51 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+Origin: r-nacos APT Repository
+Label: rnacos Repo
+Suite: stable
+Codename: stable
+Architectures: amd64 arm64
+Components: main
+Description: APT repository for rnacos
+Date: Fri, 24 Jul 2026 19:48:25 +0000
+MD5Sum:
+ 580ad3f63e1ba103907395e01794d317              202 Release
+ 496610655d46b40245c0e205a9c5b571              441 main/binary-amd64/Packages
+ 64295b0bb7bdb5852b1fc42bb2c011dd              342 main/binary-amd64/Packages.gz
+ 1f64f8c186c86c1654ff1f27ccf498ff              441 main/binary-arm64/Packages
+ 9468f5e999ba3f2547b7fab4827e7b89              340 main/binary-arm64/Packages.gz
+SHA1:
+ bfd51fdd5484a7d49f2db08057226b80e20e6e24              202 Release
+ 6e5fcb804344876d6ab24d598679c7a95b1bf21c              441 main/binary-amd64/Packages
+ 63821da8296b6702f995863d047353c73840c9bb              342 main/binary-amd64/Packages.gz
+ a7ca031eefb1ee3e17c9b38df39a0765cdb17376              441 main/binary-arm64/Packages
+ a0b1470f6514d7e348d5313a106aedfbc35f956e              340 main/binary-arm64/Packages.gz
+SHA256:
+ 098f81788b66bff5e7d46abeb6adcd346930c61c4ddf50b3a24c699341d60fa0              202 Release
+ 23b11930e7367a869e8d8137906f8004784613a3858e83a30deb6a93f0aadaeb              441 main/binary-amd64/Packages
+ ec9ed7c5f6e945e280ec4389d979c7fd391ec6fe5f29e6f602ed29a277a02a71              342 main/binary-amd64/Packages.gz
+ 894219af077aeffbcfee06b432608f1905b5dd176c02486a490b4b464ec8498a              441 main/binary-arm64/Packages
+ 22c60900ae3f6d950a13ea962a7973696fb2dcd5572fa5b2c3aeb83c0246f176              340 main/binary-arm64/Packages.gz
+SHA512:
+ d582b88b4892f1fe929cd184250cebca401fb7794626e6f6dc83c6d68353d1d5fc156a7be596683334fa5b0d15218591d15882a1347b49afd9bad4c511ad4847              202 Release
+ 95a89b678035c46939f949ed1ac07163e2c6295adebe9285d6da8234b6300dc6fe9453661ff266ba1d522092df5bfca019ee96690f77e610f27478fec560da4a              441 main/binary-amd64/Packages
+ 4053c909dec4106ab092829e4048761b118c38abd29eaa1365ae3158ba9684388f26a8d76af4949abf3dc46d12d581fce909dd6e014ab78300f2916af90332eb              342 main/binary-amd64/Packages.gz
+ 37aa3a9cf4d223c3ae8610b07a65bb3d73a16b485cc51d72b07921f5c5e5049049e8c4a22d84e2d9a0998273fa1e076007173803e6cc518f103e0b04813c07aa              441 main/binary-arm64/Packages
+ 9ebffa00235aac113505bde0e7e75a6a72772e729dce6c00b9a49f3200b66a7c45806e9052c5fee930437c798bcc074867aebe4c414d1f69e3f72bbec8ecb65b              340 main/binary-arm64/Packages.gz
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCgAdFiEEL5P10FJAKjdJfq+csEEdgjB/WrsFAmpjwYkACgkQsEEdgjB/
+Wrvkjw//csFxJHIC8W2ADxfxhzMOz1DToSUU1y3FFp5o7oA4ZJvdt0p4XiOnrq35
+pNjITR/0r67EuhInzW28YBxKe6g3WZi+x3uiHdq9BrTJyDJN9dl7hDjCIfJ3QXay
++5DOfLWG4+K7loGvUcUnpbM/J4OXvVYOvQMlfeX8mQMe286snTJLRe81VAERBtPC
+vSjnjkLThaopite5r0GJ8p2yNvRXUOKuE75D8/9zJ+Bd+OxozrGSFHug9zCV/gtF
+0sQTQuKSNorzI50uVbwhDQW4/m4AAkpBfifonvw3klVumZbbII+vZBM8vHjCHdiv
++SjspVQZ1pKLrNasOGg7mpZYSFKcQ48siW7dkvKgiCpVFkwAmh/RWfrsJdjV2iLH
+bpxZQ1qOUA35ngX9xMZ1T7uCIboW1ZoB03Q3Tfb5q6fTR3D5XR2EZ4bGL6Ltx0X4
+DwwugghBYHkKpSK+wN9z7jqKgQJY1aTYcowgByLSyyPvH8Wz4FahTnPuIYoNPMVf
+TMc7wAPODt+fZ1P1C9PJe7wRUa8Iwcx3BSXHTUBSvbBMtH8lkRcNXae33x8WJ3JS
+1Dc3rGqH0m/dPl5vUCRPpwmhKygvUFD02JNiFO2iKOd9DjQURXXPQCtcc3DoVAy4
+W4K5uWUUU1PUqpfytNeiuw6ZueXQVW/KjeU7vHMx5OLkSuq9CCY=
+=BoHF
+-----END PGP SIGNATURE-----

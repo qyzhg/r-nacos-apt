@@ -103,6 +103,17 @@
   ul.flat li::after{content:"  ·";color:var(--faint)}
   ul.flat li:last-child::after{content:""}
 
+  /* versions table */
+  table.vers{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.vers tr{border-bottom:1px solid var(--line)}
+  table.vers tr:last-child{border-bottom:0}
+  table.vers td{padding:7px 0;vertical-align:middle}
+  table.vers td.v{font-weight:700;width:96px;white-space:nowrap}
+  table.vers td.deb{color:var(--muted)}
+  table.vers td.deb a{margin:0 2px}
+  table.vers td.inst{text-align:right;white-space:nowrap}
+  #versionStatus{font-size:11px;color:var(--muted);margin:2px 0 0}
+
   footer{
     margin-top:28px;padding-top:10px;border-top:1px solid var(--black);
     font-size:11px;color:var(--muted);letter-spacing:.02em;line-height:1.75;
@@ -130,7 +141,7 @@
     <span class="k">SUITE</span> <b>stable</b><span class="sep">│</span>
     <span class="k">ARCH</span> <b>amd64</b> · <b>arm64</b><span class="sep">│</span>
     <span class="k">SIGNED</span> <b>yes</b><span class="sep">│</span>
-    <span class="k">VERSION</span> <b>0.8.5+4846c76</b><span class="sep">│</span>
+    <span class="k">VERSION</span> <b>0.8.5</b><span class="sep">│</span>
     <span class="k">BUILT</span> <b>2026-07-24</b>
   </div>
 
@@ -146,7 +157,11 @@ $ sudo systemctl enable --now rnacos</code></pre>
   </div>
   <p class="note">命令中的域名随当前访问的源自动匹配（官方 GitHub Pages / Cloudflare 镜像均可），直接复制即可。装完由 systemd 托管、开机自启；控制台 <code>http://&lt;ip&gt;:10848/rnacos/</code>，默认账号 <code>admin/admin</code>（登录后请立即改密）。</p>
 
-  <h2><span class="num">02</span>runtime spec</h2>
+  <h2><span class="num">02</span>available versions</h2>
+  <table class="vers"><tbody id="versionRows"></tbody></table>
+  <p id="versionStatus">loading…</p>
+
+  <h2><span class="num">03</span>runtime spec</h2>
   <table class="sheet">
     <tr><td class="k">http / grpc / console</td><td class="v">8848 / 9848 / 10848</td></tr>
     <tr><td class="k">user</td><td class="v">rnacos</td></tr>
@@ -154,14 +169,14 @@ $ sudo systemctl enable --now rnacos</code></pre>
     <tr><td class="k">restart policy</td><td class="v">on-failure</td></tr>
   </table>
 
-  <h2><span class="num">03</span>signing key</h2>
+  <h2><span class="num">04</span>signing key</h2>
   <table class="sheet">
     <tr><td class="k">key id</td><td class="v">B0411D82307F5ABB</td></tr>
     <tr><td class="k">fingerprint</td><td class="v">2F93 F5D0 5240 2A37 497E AF9C B041 1D82 307F 5ABB</td></tr>
     <tr><td class="k">verify</td><td class="v">curl -fsSL <span id="keyUrlTxt">…/KEY.gpg</span> | gpg --show-keys --fingerprint</td></tr>
   </table>
 
-  <h2><span class="num">04</span>files &amp; links</h2>
+  <h2><span class="num">05</span>files &amp; links</h2>
   <ul class="flat">
     <li><a id="keyLink" href="KEY.gpg">KEY.gpg</a></li>
     <li><a href="dists/stable/InRelease">InRelease</a></li>
@@ -207,6 +222,47 @@ $ sudo systemctl enable --now rnacos</code></pre>
       setTimeout(function () { btn.textContent = 'copy'; btn.classList.remove('done'); }, 1400);
     });
   });
+
+  // 拉取 amd64 Packages 索引，渲染历史版本（每版带 amd64/arm64 .deb 链接 + 一键复制 apt install rnacos=<版本>）
+  function loadVersions(root) {
+    var tbody = document.getElementById('versionRows');
+    var status = document.getElementById('versionStatus');
+    fetch(root + '/dists/stable/main/binary-amd64/Packages')
+      .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.text(); })
+      .then(function (text) {
+        var vers = [];
+        text.replace(/^Version:\s*(.+)$/gm, function (_, v) { vers.push(v.trim()); });
+        vers.sort(function (a, b) {
+          var pa = a.split(/[._+]/), pb = b.split(/[._+]/);
+          for (var i = 0; i < Math.max(pa.length, pb.length); i++) {
+            var d = (parseInt(pa[i], 10) || 0) - (parseInt(pb[i], 10) || 0);
+            if (d) return d < 0 ? 1 : -1;
+          }
+          return a < b ? 1 : (a > b ? -1 : 0);
+        });
+        if (!vers.length) { status.textContent = '(索引里暂无版本)'; return; }
+        status.style.display = 'none';
+        vers.forEach(function (v) {
+          var tr = document.createElement('tr');
+          tr.innerHTML =
+            '<td class="v">' + v + '</td>' +
+            '<td class="deb"><a href="' + root + '/pool/main/r/rnacos/rnacos_' + v + '_amd64.deb">amd64</a> · ' +
+            '<a href="' + root + '/pool/main/r/rnacos/rnacos_' + v + '_arm64.deb">arm64</a></td>' +
+            '<td class="inst"><button class="copy" data-ver="' + v + '" type="button">apt install</button></td>';
+          tbody.appendChild(tr);
+        });
+        Array.prototype.forEach.call(tbody.querySelectorAll('button.copy'), function (b) {
+          b.addEventListener('click', function () {
+            navigator.clipboard.writeText('sudo apt install rnacos=' + b.dataset.ver).then(function () {
+              var old = b.textContent; b.textContent = 'copied'; b.classList.add('done');
+              setTimeout(function () { b.textContent = old; b.classList.remove('done'); }, 1400);
+            });
+          });
+        });
+      })
+      .catch(function () { status.textContent = '(索引加载失败 — 直接看下面的 Packages 文件)'; });
+  }
+  loadVersions(root);
 })();
 </script>
 </body>
