@@ -4,9 +4,74 @@ on:
   schedule:
     - cron: '0 2 * * *' # 每天 UTC 02:00 自动运行
   workflow_dispatch: # 支持在 Actions 界面手动点击触发
+    inputs:
+      force:
+        description: '强制重新构建并部署（即使该版本已发布，用于排错/重建索引）'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
+  # 第一步：只算版本号 + 查 gh-pages 上是否已经发布过该版本。
+  # 每天定时跑这一步非常便宜（两次 API 请求），避免无意义的全量 cargo build / 重新部署。
+  check:
+    name: Detect upstream version & skip-if-unchanged
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      skip: ${{ steps.check_version.outputs.skip }}
+      tag: ${{ steps.get_release.outputs.tag }}
+      version: ${{ steps.get_release.outputs.version }}
+    steps:
+      - name: Fetch Latest r-nacos Release Tag
+        id: get_release
+        run: |
+          # 获取官方最新 release tag (如 v0.8.5)
+          LATEST_TAG=$(curl -s https://api.github.com/repos/nacos-group/r-nacos/releases/latest | jq -r .tag_name)
+          echo "tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
+          # 去掉 tag 前面的 v 字母，获取纯版本号 (如 0.8.5)
+          UPSTREAM="${LATEST_TAG#v}"
+          # 末尾追加本仓库(r-nacos-apt)的短 commit hash：每次改了打包/工作流版本号都会变，
+          # 已装的用户可通过 apt upgrade 拉到新包（0.8.5+<sha> 比 0.8.5 新）
+          echo "version=${UPSTREAM}+${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Check if Version Already Published
+        id: check_version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.get_release.outputs.version }}"
+          # workflow_dispatch 手动触发并勾选 force 时，跳过存在性检查，强制重建
+          if [ "${{ inputs.force }}" = "true" ]; then
+            echo "Force rebuild requested → will build."
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # 查 gh-pages 分支是否已存在该 VERSION 的两个 deb
+          # （amd64 + arm64 都在才算"已发布"，避免上一次只发了一半架构时被误判跳过）
+          check_deb () {
+            curl -s -o /dev/null -w "%{http_code}" \
+              -H "Authorization: token ${GH_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/contents/pool/main/r/rnacos/rnacos_${VERSION}_${1}.deb?ref=gh-pages"
+          }
+          AMD64=$(check_deb amd64)
+          ARM64=$(check_deb arm64)
+          echo "Existence check for $VERSION → amd64 HTTP $AMD64, arm64 HTTP $ARM64"
+          if [ "$AMD64" = "200" ] && [ "$ARM64" = "200" ]; then
+            echo "Version $VERSION already published → skip build & deploy."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Version $VERSION not fully published → will build."
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # 第二步：只有版本确实更新了（或手动 force）才会跑，全量 build + 部署。
   build-apt:
+    name: Build & publish (skipped when unchanged)
+    needs: check
+    if: needs.check.outputs.skip != 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -22,23 +87,11 @@ jobs:
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
 
-      - name: Fetch Latest r-nacos Release Tag
-        id: get_release
-        run: |
-          # 获取官方最新 release tag (如 v0.8.5)
-          LATEST_TAG=$(curl -s https://api.github.com/repos/nacos-group/r-nacos/releases/latest | jq -r .tag_name)
-          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
-          # 去掉 tag 前面的 v 字母，获取纯版本号 (如 0.8.5)
-          UPSTREAM="${LATEST_TAG#v}"
-          # 末尾追加本仓库(r-nacos-apt)的短 commit hash：每次改了打包/工作流版本号都会变，
-          # 已装的用户可通过 apt upgrade 拉到新包（0.8.5+<sha> 比 0.8.5 新）
-          echo "VERSION=${UPSTREAM}+${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
-
       - name: Clone r-nacos Source Code
         uses: actions/checkout@v4
         with:
           repository: nacos-group/r-nacos
-          ref: ${{ steps.get_release.outputs.tag }}
+          ref: ${{ needs.check.outputs.tag }}
           path: r-nacos-src
 
       - name: Install aarch64 Cross Toolchain
@@ -63,7 +116,7 @@ jobs:
 
       - name: Setup APT Workspace & Package .deb
         run: |
-          VERSION="${{ steps.get_release.outputs.VERSION }}"
+          VERSION="${{ needs.check.outputs.version }}"
 
           # 创建目录结构（同时支持 amd64 与 arm64 两套架构索引）
           mkdir -p public/pool/main/r/rnacos
