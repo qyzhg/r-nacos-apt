@@ -14,13 +14,13 @@ if [ "$1" = "configure" ]; then
     # 注册并启动 systemd 服务
     if command -v systemctl >/dev/null 2>&1; then
         systemctl daemon-reload || true
-        systemctl enable r-nacos.service || true
+        systemctl enable rnacos.service || true
         if [ -n "$2" ]; then
             # 升级：重启加载新二进制
-            systemctl restart r-nacos.service || true
+            systemctl restart rnacos.service || true
         else
             # 全新安装：启动
-            systemctl start r-nacos.service || true
+            systemctl start rnacos.service || true
         fi
     fi
 fi

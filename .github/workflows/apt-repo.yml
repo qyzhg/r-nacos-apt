@@ -66,7 +66,7 @@ jobs:
           VERSION="${{ steps.get_release.outputs.VERSION }}"
 
           # 创建目录结构（同时支持 amd64 与 arm64 两套架构索引）
-          mkdir -p public/pool/main/r/r-nacos
+          mkdir -p public/pool/main/r/rnacos
           mkdir -p public/dists/stable/main/binary-amd64
           mkdir -p public/dists/stable/main/binary-arm64
 
@@ -76,17 +76,20 @@ jobs:
             local BIN="$2"
             rm -rf deb-build
             mkdir -p deb-build/DEBIAN deb-build/usr/bin deb-build/lib/systemd/system
-            cp "$BIN" deb-build/usr/bin/r-nacos
-            chmod +x deb-build/usr/bin/r-nacos
-            printf 'Package: r-nacos\nVersion: %s\nArchitecture: %s\nSection: net\nPriority: optional\nMaintainer: qyzhg <qyzhg@qyzhg.com>\nDescription: Rapid Nacos server implementation in Rust.\n' \
+            # 二进制名保持与上游一致（rnacos），让 apt 装出来的命令和 docker/cargo/brew 等安装方式相同
+            cp "$BIN" deb-build/usr/bin/rnacos
+            chmod +x deb-build/usr/bin/rnacos
+            # Package 名统一为 rnacos（与二进制/上游一致）；Replaces+Conflicts 让已装旧包 r-nacos 的用户
+            # 在 apt install rnacos 时自动卸载旧包（含停掉旧的 r-nacos.service），避免两个服务抢端口
+            printf 'Package: rnacos\nVersion: %s\nArchitecture: %s\nSection: net\nPriority: optional\nMaintainer: qyzhg <qyzhg@qyzhg.com>\nReplaces: r-nacos\nConflicts: r-nacos\nDescription: Rapid Nacos server implementation in Rust.\n' \
               "$VERSION" "$ARCH" > deb-build/DEBIAN/control
-            # 内置 systemd unit + maintainer 脚本：apt 装完即可 systemctl start r-nacos
-            cp packaging/r-nacos.service deb-build/lib/systemd/system/
+            # 内置 systemd unit + maintainer 脚本：apt 装完即可 systemctl start rnacos
+            cp packaging/rnacos.service deb-build/lib/systemd/system/
             cp packaging/postinst deb-build/DEBIAN/postinst
             cp packaging/prerm     deb-build/DEBIAN/prerm
             cp packaging/postrm    deb-build/DEBIAN/postrm
             chmod 0755 deb-build/DEBIAN/postinst deb-build/DEBIAN/prerm deb-build/DEBIAN/postrm
-            dpkg-deb --build --root-owner-group deb-build "public/pool/main/r/r-nacos/r-nacos_${VERSION}_${ARCH}.deb"
+            dpkg-deb --build --root-owner-group deb-build "public/pool/main/r/rnacos/rnacos_${VERSION}_${ARCH}.deb"
           }
 
           make_deb amd64 r-nacos-src/target/release/rnacos
@@ -101,7 +104,7 @@ jobs:
           cd public
 
           # 1. 扫描 pool 生成包含全部架构的 Packages，再按 Architecture 字段拆分到各自的索引目录
-          #    --multiversion 必须加：两个 deb 的 Package 名都是 r-nacos，不加会被当成重复而丢掉其中一个架构
+          #    --multiversion 必须加：两个 deb 的 Package 名都是 rnacos，不加会被当成重复而丢掉其中一个架构
           dpkg-scanpackages --multiversion pool/ /dev/null > /tmp/Packages.all
           awk 'BEGIN{RS=""; ORS="\n\n"} /Architecture: amd64/' /tmp/Packages.all > dists/stable/main/binary-amd64/Packages
           awk 'BEGIN{RS=""; ORS="\n\n"} /Architecture: arm64/' /tmp/Packages.all > dists/stable/main/binary-arm64/Packages
@@ -112,12 +115,12 @@ jobs:
           cd dists/stable
           cat <<EOF > Release
           Origin: qyzhg APT Repository
-          Label: r-nacos Repo
+          Label: rnacos Repo
           Suite: stable
           Codename: stable
           Architectures: amd64 arm64
           Components: main
-          Description: APT repository for r-nacos
+          Description: APT repository for rnacos
           EOF
 
           # 计算 Packages 等文件的 Hash 并附加到 Release 文件尾部

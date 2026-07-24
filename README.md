@@ -4,7 +4,7 @@
 [![Architecture](https://img.shields.io/badge/arch-amd64%20%7C%20arm64-blue)](https://github.com/qyzhg/r-nacos-apt)
 [![Suite](https://img.shields.io/badge/suite-stable-green)](https://github.com/qyzhg/r-nacos-apt)
 
-通过 **GitHub Actions** 自动拉取 [nacos-group/r-nacos](https://github.com/nacos-group/r-nacos) 的最新 Release、编译并打包成 `.deb`，再以 **GitHub Pages** 作为 APT 源对外发布。一句话：**在 Debian / Ubuntu 上用 `apt` 安装 r-nacos。**
+通过 **GitHub Actions** 自动拉取 [nacos-group/r-nacos](https://github.com/nacos-group/r-nacos) 的最新 Release、编译并打包成 `.deb`，再以 **GitHub Pages** 作为 APT 源对外发布。一句话：**在 Debian / Ubuntu 上用 `apt` 安装 rnacos。**
 
 > r-nacos 是用 Rust 实现的 Nacos 服务，更轻量、更快。本仓库只负责 **打包分发**，r-nacos 本体归上游所有。
 
@@ -29,27 +29,27 @@
 ```bash
 # 1. 下载并导入你的 GPG 公钥
 sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://qyzhg.github.io/r-nacos-apt/KEY.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/r-nacos.gpg
+curl -fsSL https://qyzhg.github.io/r-nacos-apt/KEY.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/rnacos.gpg
 
 # 2. 添加 APT 源到系统
-echo "deb [signed-by=/etc/apt/keyrings/r-nacos.gpg] https://qyzhg.github.io/r-nacos-apt stable main" | sudo tee /etc/apt/sources.list.d/r-nacos.list
+echo "deb [signed-by=/etc/apt/keyrings/rnacos.gpg] https://qyzhg.github.io/r-nacos-apt stable main" | sudo tee /etc/apt/sources.list.d/rnacos.list
 
-# 3. 更新并安装 r-nacos
+# 3. 更新并安装 rnacos
 sudo apt update
-sudo apt install r-nacos
+sudo apt install rnacos
 ```
 
 ### 验证安装
 
 ```bash
-r-nacos --version      # 查看版本
-which r-nacos          # /usr/bin/r-nacos
+rnacos --version       # 查看版本
+which rnacos           # /usr/bin/rnacos
 ```
 
 服务由 systemd 托管（安装时已自动启动），验证：
 
 ```bash
-sudo systemctl status r-nacos # 应为 active (running)
+sudo systemctl status rnacos # 应为 active (running)
 ss -lntp | grep 8848          # 确认 HTTP 端口在监听
 ```
 
@@ -68,17 +68,17 @@ ss -lntp | grep 8848          # 确认 HTTP 端口在监听
 ```bash
 # 1. 下载并导入 GPG 公钥（走镜像，国内可达）
 sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://rnacos-img.qyzhg.cc/KEY.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/r-nacos.gpg
+curl -fsSL https://rnacos-img.qyzhg.cc/KEY.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/rnacos.gpg
 
 # 2. 添加 APT 源（域名换成镜像）
-echo "deb [signed-by=/etc/apt/keyrings/r-nacos.gpg] https://rnacos-img.qyzhg.cc stable main" | sudo tee /etc/apt/sources.list.d/r-nacos.list
+echo "deb [signed-by=/etc/apt/keyrings/rnacos.gpg] https://rnacos-img.qyzhg.cc stable main" | sudo tee /etc/apt/sources.list.d/rnacos.list
 
-# 3. 更新并安装 r-nacos
+# 3. 更新并安装 rnacos
 sudo apt update
-sudo apt install r-nacos
+sudo apt install rnacos
 ```
 
-后续升级同样走镜像：`sudo apt update && sudo apt upgrade r-nacos`。和官方源完全等价，`apt update` 能正常跟新版。
+后续升级同样走镜像：`sudo apt update && sudo apt upgrade rnacos`。和官方源完全等价，`apt update` 能正常跟新版。
 
 <details>
 <summary><b>镜像偶尔也不稳时的备选（jsDelivr）</b></summary>
@@ -95,7 +95,7 @@ https://cdn.jsdelivr.net/gh/qyzhg/r-nacos-apt@gh-pages
 
 ---
 
-## 🔄 更新 r-nacos
+## 🔄 更新 rnacos
 
 本仓库每天 UTC 02:00 自动拉取上游最新版本并重新打包，所以「更新」就是刷新 apt 索引后升级。
 
@@ -103,15 +103,15 @@ https://cdn.jsdelivr.net/gh/qyzhg/r-nacos-apt@gh-pages
 
 ```bash
 sudo apt update
-sudo apt upgrade r-nacos          # 等价于 sudo apt install r-nacos
+sudo apt upgrade rnacos          # 等价于 sudo apt install rnacos
 ```
 
 ### 查看版本
 
 ```bash
-r-nacos --version                 # 当前安装的版本
+rnacos --version                  # 当前安装的版本
 
-apt list -a r-nacos               # 仓库中可用的版本（apt update 之后）
+apt list -a rnacos               # 仓库中可用的版本（apt update 之后）
 ```
 
 ### 更新须知
@@ -123,12 +123,12 @@ apt list -a r-nacos               # 仓库中可用的版本（apt update 之后
 <details>
 <summary><b>需要回滚到旧版本？</b></summary>
 
-APT 索引只登记最新版本，`apt install r-nacos=<旧版本号>` 通常会报 "not found"。但历史 `.deb` 仍保留在 pool 里，可直接用 `dpkg -i` 安装指定版本：
+APT 索引只登记最新版本，`apt install rnacos=<旧版本号>` 通常会报 "not found"。但历史 `.deb` 仍保留在 pool 里，可直接用 `dpkg -i` 安装指定版本：
 
 ```bash
 # 将 <version> 与 <arch> 替换为你需要的值，例如 0.8.4 / amd64
-wget https://qyzhg.github.io/r-nacos-apt/pool/main/r/r-nacos/r-nacos_<version>_<arch>.deb
-sudo dpkg -i r-nacos_<version>_<arch>.deb
+wget https://qyzhg.github.io/r-nacos-apt/pool/main/r/rnacos/rnacos_<version>_<arch>.deb
+sudo dpkg -i rnacos_<version>_<arch>.deb
 ```
 
 </details>
@@ -142,12 +142,12 @@ sudo dpkg -i r-nacos_<version>_<arch>.deb
 ### 常用命令
 
 ```bash
-sudo systemctl status r-nacos        # 查看状态（应为 active (running)）
-sudo systemctl restart r-nacos       # 重启（改完配置后）
-sudo systemctl stop r-nacos          # 停止
-sudo systemctl start r-nacos         # 启动
-sudo systemctl disable r-nacos       # 取消开机自启（安装时已默认 enable）
-sudo journalctl -u r-nacos -f        # 实时查看日志
+sudo systemctl status rnacos        # 查看状态（应为 active (running)）
+sudo systemctl restart rnacos       # 重启（改完配置后）
+sudo systemctl stop rnacos          # 停止
+sudo systemctl start rnacos         # 启动
+sudo systemctl disable rnacos       # 取消开机自启（安装时已默认 enable）
+sudo journalctl -u rnacos -f        # 实时查看日志
 ```
 
 ### 默认运行配置
@@ -166,24 +166,34 @@ sudo journalctl -u r-nacos -f        # 实时查看日志
 **不要直接改 unit 文件**（升级时会被覆盖），用 drop-in 覆盖：
 
 ```bash
-sudo systemctl edit r-nacos
+sudo systemctl edit rnacos
 ```
 
-在打开的编辑器里追加（示例：改 HTTP 端口 + 初始化管理员密码）：
+在打开的编辑器里追加（示例：改 HTTP 端口等**非机密**配置）：
 
 ```ini
 [Service]
 Environment=RNACOS_HTTP_PORT=18848
-Environment=RNACOS_INIT_ADMIN_PASSWORD=your-strong-password
 ```
 
 保存后重启生效：
 
 ```bash
-sudo systemctl restart r-nacos
+sudo systemctl restart rnacos
 ```
 
-> `RNACOS_INIT_ADMIN_PASSWORD` 仅在**首次初始化**时生效；若已用默认 `admin/admin` 启动过，改它不会重置密码，请到控制台修改。
+> ⚠️ **不要把密码、token 等机密写进 `Environment=`**：它以明文存在 unit/drop-in 里，本机其他用户可通过 `systemctl show rnacos` 看到。
+>
+> **管理员密码推荐直接在控制台修改**（最简单，且不落盘到任何配置文件）。若必须在首次初始化时用配置设定，请放进**权限受限**的环境变量文件，再用 `EnvironmentFile=` 引用（systemd 以 root 读取，`rnacos` 进程继承但读不到文件本身）：
+>
+> ```bash
+> sudo install -m 600 -o root -g root /dev/null /etc/rnacos/env
+> echo "RNACOS_INIT_ADMIN_PASSWORD=your-strong-password" | sudo tee /etc/rnacos/env >/dev/null
+> sudo systemctl edit rnacos        # 加一行：EnvironmentFile=/etc/rnacos/env
+> sudo systemctl restart rnacos
+> ```
+>
+> （`RNACOS_INIT_ADMIN_PASSWORD` 仅在**首次初始化**时生效；若已用默认 `admin/admin` 启动过，改它无效，请到控制台改。）
 
 完整参数列表见 [r-nacos 运行参数说明](https://r-nacos.github.io/docs/notes/env_config/)。
 
@@ -302,9 +312,9 @@ GitHub Actions 定时触发 (UTC 02:00)
 ```
 https://qyzhg.github.io/r-nacos-apt/
 ├── KEY.gpg                                  # 公钥（ASCII 装甲）
-├── pool/main/r/r-nacos/
-│   ├── r-nacos_<version>_amd64.deb          # x86_64 安装包
-│   └── r-nacos_<version>_arm64.deb          # aarch64 安装包
+├── pool/main/r/rnacos/
+│   ├── rnacos_<version>_amd64.deb          # x86_64 安装包
+│   └── rnacos_<version>_arm64.deb          # aarch64 安装包
 └── dists/stable/
     ├── InRelease                            # 内联签名索引
     ├── Release                              # 元数据 + 校验和（Architectures: amd64 arm64）
@@ -332,8 +342,8 @@ https://qyzhg.github.io/r-nacos-apt/
 请确认公钥已导入且指纹为 `2F93F5D0 5240 2A37 497E AF9C B041 1D82 307F 5ABB`。若系统较旧（无 `/etc/apt/keyrings/`），可改用：
 
 ```bash
-curl -fsSL https://qyzhg.github.io/r-nacos-apt/KEY.gpg | sudo tee /etc/apt/trusted.gpg.d/r-nacos.asc
-echo "deb https://qyzhg.github.io/r-nacos-apt stable main" | sudo tee /etc/apt/sources.list.d/r-nacos.list
+curl -fsSL https://qyzhg.github.io/r-nacos-apt/KEY.gpg | sudo tee /etc/apt/trusted.gpg.d/rnacos.asc
+echo "deb https://qyzhg.github.io/r-nacos-apt stable main" | sudo tee /etc/apt/sources.list.d/rnacos.list
 ```
 
 **Q：安装的版本不是最新？**

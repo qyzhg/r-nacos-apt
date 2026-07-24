@@ -13,7 +13,7 @@ Environment=RNACOS_HTTP_PORT=8848
 Environment=RNACOS_DATA_DIR=/var/lib/r-nacos/nacos_db
 Environment=RNACOS_GMT_OFFSET_HOURS=8
 Environment=RUST_LOG=info
-ExecStart=/usr/bin/r-nacos
+ExecStart=/usr/bin/rnacos
 Restart=on-failure
 RestartSec=5s
 LimitNOFILE=65536

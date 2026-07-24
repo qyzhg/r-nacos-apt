@@ -3,7 +3,7 @@ set -e
 
 if [ "$1" = "purge" ]; then
     if command -v systemctl >/dev/null 2>&1; then
-        systemctl disable r-nacos.service >/dev/null 2>&1 || true
+        systemctl disable rnacos.service >/dev/null 2>&1 || true
         systemctl daemon-reload || true
     fi
     # 不自动删除数据目录和用户，避免误删用户数据。
