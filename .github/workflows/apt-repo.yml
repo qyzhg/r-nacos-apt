@@ -228,11 +228,12 @@ jobs:
 
       - name: Mirror to Cloudflare Pages
         if: ${{ hashFiles('cf-mirror/dists/stable/InRelease') != '' }}   # 目录为空绝不部署，避免把 CF 站清空
-        uses: cloudflare/pages-action@v1
+        uses: cloudflare/wrangler-action@v3
         continue-on-error: true   # CF 端失败不影响整个 workflow：build-apt 已绿 = 主流程成功
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: rnacos-apt   # 必须与你在 CF 上建的 Pages 项目名一致，不一致就改这里
-          directory: cf-mirror
-          branch: main              # Pages 据此判定 production 部署；项目里 production branch 也要设成 main
+          # 用 wrangler v4 直传 Pages。pages-action@v1 已停更：它钉死 wrangler v2(EOL)
+          # 和 Node 20(已弃用)——日志里那一长串 miniflare v2 / Node 20 deprecation 警告全是它造成的。
+          # --branch=main 命中项目 production 分支 → 生产部署（项目里 production branch 也要设成 main）
+          command: pages deploy cf-mirror --project-name=rnacos-apt --branch=main
