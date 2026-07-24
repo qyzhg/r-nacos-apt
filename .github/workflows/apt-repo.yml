@@ -114,7 +114,7 @@ jobs:
           # 2. 生成 Release 元数据文件（Architectures 同时列出两套架构）
           cd dists/stable
           cat <<EOF > Release
-          Origin: qyzhg APT Repository
+          Origin: r-nacos APT Repository
           Label: rnacos Repo
           Suite: stable
           Codename: stable

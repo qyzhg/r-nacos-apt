@@ -1,8 +1,8 @@
 # r-nacos APT 仓库
 
-[![Build](https://github.com/qyzhg/r-nacos-apt/actions/workflows/apt-repo.yml/badge.svg)](https://github.com/qyzhg/r-nacos-apt/actions/workflows/apt-repo.yml)
-[![Architecture](https://img.shields.io/badge/arch-amd64%20%7C%20arm64-blue)](https://github.com/qyzhg/r-nacos-apt)
-[![Suite](https://img.shields.io/badge/suite-stable-green)](https://github.com/qyzhg/r-nacos-apt)
+[![Build](https://github.com/r-nacos/r-nacos-apt/actions/workflows/apt-repo.yml/badge.svg)](https://github.com/r-nacos/r-nacos-apt/actions/workflows/apt-repo.yml)
+[![Architecture](https://img.shields.io/badge/arch-amd64%20%7C%20arm64-blue)](https://github.com/r-nacos/r-nacos-apt)
+[![Suite](https://img.shields.io/badge/suite-stable-green)](https://github.com/r-nacos/r-nacos-apt)
 
 通过 **GitHub Actions** 自动拉取 [nacos-group/r-nacos](https://github.com/nacos-group/r-nacos) 的最新 Release、编译并打包成 `.deb`，再以 **GitHub Pages** 作为 APT 源对外发布。一句话：**在 Debian / Ubuntu 上用 `apt` 安装 rnacos。**
 
@@ -29,10 +29,10 @@
 ```bash
 # 1. 下载并导入你的 GPG 公钥
 sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://qyzhg.github.io/r-nacos-apt/KEY.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/rnacos.gpg
+curl -fsSL https://r-nacos.github.io/r-nacos-apt/KEY.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/rnacos.gpg
 
 # 2. 添加 APT 源到系统
-echo "deb [signed-by=/etc/apt/keyrings/rnacos.gpg] https://qyzhg.github.io/r-nacos-apt stable main" | sudo tee /etc/apt/sources.list.d/rnacos.list
+echo "deb [signed-by=/etc/apt/keyrings/rnacos.gpg] https://r-nacos.github.io/r-nacos-apt stable main" | sudo tee /etc/apt/sources.list.d/rnacos.list
 
 # 3. 更新并安装 rnacos
 sudo apt update
@@ -61,7 +61,7 @@ ss -lntp | grep 8848          # 确认 HTTP 端口在监听
 
 ## 🇨🇳 国内用户（大陆镜像）
 
-`qyzhg.github.io` 在国内大陆经常被重置（RST），`curl` / `apt` 会失败。已用 Cloudflare 搭了一个国内可达的镜像 **`https://rnacos-img.qyzhg.cc`**——内容和官方源完全一致、同样支持自动更新。
+`r-nacos.github.io` 在国内大陆经常被重置（RST），`curl` / `apt` 会失败。已用 Cloudflare 搭了一个国内可达的镜像 **`https://rnacos-img.qyzhg.cc`**——内容和官方源完全一致、同样支持自动更新。
 
 国内服务器把安装命令里的域名换成镜像即可（**公钥不变，和上面一样**）：
 
@@ -86,10 +86,10 @@ sudo apt install rnacos
 若 Cloudflare 镜像在某台机器上也不通，可用 jsDelivr（国内有节点）顶一下，把上面命令里的域名换成：
 
 ```
-https://cdn.jsdelivr.net/gh/qyzhg/r-nacos-apt@gh-pages
+https://cdn.jsdelivr.net/gh/r-nacos/r-nacos-apt@gh-pages
 ```
 
-注意：jsDelivr 偶尔会出现索引缓存不一致（`InRelease` 和 `Packages` 哈希对不上，导致 `apt install` 报找不到包）。遇到时把 `@gh-pages` 换成具体的 commit（到 [gh-pages 分支提交记录](https://github.com/qyzhg/r-nacos-apt/commits/gh-pages) 复制最新 commit SHA）即可恢复，代价是该源不会自动跟新版。**日常优先用上面的 Cloudflare 镜像。**
+注意：jsDelivr 偶尔会出现索引缓存不一致（`InRelease` 和 `Packages` 哈希对不上，导致 `apt install` 报找不到包）。遇到时把 `@gh-pages` 换成具体的 commit（到 [gh-pages 分支提交记录](https://github.com/r-nacos/r-nacos-apt/commits/gh-pages) 复制最新 commit SHA）即可恢复，代价是该源不会自动跟新版。**日常优先用上面的 Cloudflare 镜像。**
 
 </details>
 
@@ -116,7 +116,7 @@ apt list -a rnacos               # 仓库中可用的版本（apt update 之后�
 
 ### 更新须知
 
-- **新版本还没出现？** 上游刚发布的 release，本仓库最快次日 UTC 02:00 之后才入库。急着用可去 [Actions 页面](https://github.com/qyzhg/r-nacos-apt/actions/workflows/apt-repo.yml) 手动点一次 `Run workflow` 立即触发。
+- **新版本还没出现？** 上游刚发布的 release，本仓库最快次日 UTC 02:00 之后才入库。急着用可去 [Actions 页面](https://github.com/r-nacos/r-nacos-apt/actions/workflows/apt-repo.yml) 手动点一次 `Run workflow` 立即触发。
 - **数据与配置不会丢。** 你的数据目录（`/var/lib/r-nacos`）和 `systemctl edit` 的 drop-in 配置都不在包里，`apt upgrade` 只更新二进制与 unit，不会动你的数据与自定义配置。
 - **升级前建议备份。** 跨大版本升级时，推荐先备份 r-nacos 的数据目录再执行升级，方便回滚。
 
@@ -127,7 +127,7 @@ APT 索引只登记最新版本，`apt install rnacos=<旧版本号>` 通常会�
 
 ```bash
 # 将 <version> 与 <arch> 替换为你需要的值，例如 0.8.4 / amd64
-wget https://qyzhg.github.io/r-nacos-apt/pool/main/r/rnacos/rnacos_<version>_<arch>.deb
+wget https://r-nacos.github.io/r-nacos-apt/pool/main/r/rnacos/rnacos_<version>_<arch>.deb
 sudo dpkg -i rnacos_<version>_<arch>.deb
 ```
 
@@ -209,12 +209,12 @@ sudo systemctl restart rnacos
 | Key ID (long) | `B0411D82307F5ABB` |
 | 创建日期 | 2026-07-22 |
 
-**在线获取：** <https://qyzhg.github.io/r-nacos-apt/KEY.gpg>
+**在线获取：** <https://r-nacos.github.io/r-nacos-apt/KEY.gpg>
 
 **手动校验指纹：**
 
 ```bash
-curl -fsSL https://qyzhg.github.io/r-nacos-apt/KEY.gpg | gpg --show-keys --fingerprint
+curl -fsSL https://r-nacos.github.io/r-nacos-apt/KEY.gpg | gpg --show-keys --fingerprint
 ```
 
 <details>
@@ -310,7 +310,7 @@ GitHub Actions 定时触发 (UTC 02:00)
 ### 发布后的仓库结构
 
 ```
-https://qyzhg.github.io/r-nacos-apt/
+https://r-nacos.github.io/r-nacos-apt/
 ├── KEY.gpg                                  # 公钥（ASCII 装甲）
 ├── pool/main/r/rnacos/
 │   ├── rnacos_<version>_amd64.deb          # x86_64 安装包
@@ -332,7 +332,7 @@ https://qyzhg.github.io/r-nacos-apt/
 | 方式 | 说明 |
 | --- | --- |
 | `schedule` | `cron: '0 2 * * *'`，每天 UTC 02:00 自动运行 |
-| `workflow_dispatch` | 在 [Actions 页面](https://github.com/qyzhg/r-nacos-apt/actions/workflows/apt-repo.yml) 手动点击 `Run workflow` |
+| `workflow_dispatch` | 在 [Actions 页面](https://github.com/r-nacos/r-nacos-apt/actions/workflows/apt-repo.yml) 手动点击 `Run workflow` |
 
 ---
 
@@ -342,8 +342,8 @@ https://qyzhg.github.io/r-nacos-apt/
 请确认公钥已导入且指纹为 `2F93F5D0 5240 2A37 497E AF9C B041 1D82 307F 5ABB`。若系统较旧（无 `/etc/apt/keyrings/`），可改用：
 
 ```bash
-curl -fsSL https://qyzhg.github.io/r-nacos-apt/KEY.gpg | sudo tee /etc/apt/trusted.gpg.d/rnacos.asc
-echo "deb https://qyzhg.github.io/r-nacos-apt stable main" | sudo tee /etc/apt/sources.list.d/rnacos.list
+curl -fsSL https://r-nacos.github.io/r-nacos-apt/KEY.gpg | sudo tee /etc/apt/trusted.gpg.d/rnacos.asc
+echo "deb https://r-nacos.github.io/r-nacos-apt stable main" | sudo tee /etc/apt/sources.list.d/rnacos.list
 ```
 
 **Q：安装的版本不是最新？**
@@ -360,9 +360,9 @@ echo "deb https://qyzhg.github.io/r-nacos-apt stable main" | sudo tee /etc/apt/s
 ## 🔗 相关链接
 
 - 上游项目：[nacos-group/r-nacos](https://github.com/nacos-group/r-nacos)
-- 构建流水线：[Actions](https://github.com/qyzhg/r-nacos-apt/actions/workflows/apt-repo.yml)
-- APT 源地址：<https://qyzhg.github.io/r-nacos-apt/>
-- 问题反馈：[Issues](https://github.com/qyzhg/r-nacos-apt/issues)
+- 构建流水线：[Actions](https://github.com/r-nacos/r-nacos-apt/actions/workflows/apt-repo.yml)
+- APT 源地址：<https://r-nacos.github.io/r-nacos-apt/>
+- 问题反馈：[Issues](https://github.com/r-nacos/r-nacos-apt/issues)
 
 ---
 
