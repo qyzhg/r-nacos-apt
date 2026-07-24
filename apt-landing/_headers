@@ -1,0 +1,9 @@
+# Cloudflare Pages 自定义响应头。
+# 让落地页（/ 与 /index.html）不被边缘节点长缓存——
+# 否则新版部署后根路径仍可能命中旧缓存（之前手动上传的占位页就被缓存了 7 天）。
+# apt 的索引 / .deb 等文件 Cloudflare 默认就是 max-age=0, must-revalidate，无需在此重复声明。
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
