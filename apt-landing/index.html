@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>rnacos / apt repository</title>
+<meta name="description" content="rnacos（Rust 实现的轻量 Nacos）的 Debian/Ubuntu APT 软件源，amd64/arm64，GPG 签名，每日自动跟进上游。">
+<style>
+  :root{
+    --bg:#ffffff;
+    --ink:#111111;
+    --muted:#5f5f5f;
+    --faint:#9b9b9b;
+    --line:#d4d4d4;
+    --soft:#f2f2f2;
+    --softer:#f7f7f7;
+    --black:#000000;
+    --link:#003fb8;
+    --link-hover:#001f6b;
+    --ok:#1c7a2e;
+    --mono:ui-monospace,"SFMono-Regular","SF Mono",Menlo,Consolas,"Liberation Mono","DejaVu Sans Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font:14px/1.6 var(--mono);
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:780px;margin:0 auto;padding:36px 20px 52px}
+
+  a{color:var(--link);text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:1px}
+  a:hover{color:var(--link-hover)}
+  code{font-family:var(--mono);background:var(--soft);padding:1px 5px;border:1px solid var(--line)}
+  .codeblock code{background:none;padding:0;border:0}
+
+  /* masthead */
+  .mast{
+    border-top:3px solid var(--black);
+    border-bottom:1px solid var(--black);
+    display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:9px 0;
+  }
+  .mast .title{font-size:15px;font-weight:700;letter-spacing:.01em}
+  .mast .title .dim{color:var(--muted);font-weight:400}
+  .mast .tag{font-size:11px;color:var(--muted);letter-spacing:.08em}
+
+  .lede{margin:14px 0 0}
+  .lede .muted{color:var(--muted)}
+
+  /* spec strip */
+  .spec{
+    margin:16px 0 0;border:1px solid var(--black);background:var(--softer);
+    padding:8px 12px;font-size:12px;white-space:nowrap;overflow-x:auto;
+  }
+  .spec b{font-weight:700;color:var(--ink)}
+  .spec .k{color:var(--muted)}
+  .spec .sep{color:var(--faint);padding:0 7px}
+
+  /* section headings — datasheet dividers */
+  h2{
+    font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+    margin:30px 0 12px;padding-bottom:5px;border-bottom:2px solid var(--black);
+  }
+  h2 .num{color:var(--faint);font-weight:400;margin-right:9px}
+
+  /* code block */
+  .codeblock{border:1px solid var(--black);background:var(--bg)}
+  .codeblock .bar{
+    display:flex;justify-content:space-between;align-items:center;
+    background:var(--soft);border-bottom:1px solid var(--black);padding:4px 10px;
+  }
+  .codeblock .lang{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .copy{
+    font:inherit;font-size:11px;color:var(--link);background:none;border:0;cursor:pointer;
+    padding:0;text-decoration:underline;text-underline-offset:2px;
+  }
+  .copy:hover{color:var(--link-hover)}
+  .copy.done{color:var(--ok);text-decoration:none}
+  .codeblock pre{
+    margin:0;padding:12px 14px;overflow-x:auto;
+    font-size:12.5px;line-height:1.85;white-space:pre;color:var(--ink);
+  }
+  .prompt{color:var(--faint);user-select:none}
+
+  .note{margin:10px 0 0;font-size:12px;color:var(--muted);line-height:1.75}
+  .note code{font-size:11.5px}
+
+  /* datasheet tables */
+  table.sheet{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.sheet td{padding:6px 0;vertical-align:top;border-bottom:1px solid var(--line)}
+  table.sheet tr:last-child td{border-bottom:0}
+  table.sheet td.k{
+    color:var(--muted);width:36%;white-space:nowrap;
+    text-transform:uppercase;letter-spacing:.04em;font-size:11px;
+  }
+  table.sheet td.v{color:var(--ink);word-break:break-all}
+
+  /* links list */
+  ul.flat{list-style:none;margin:0;padding:0;font-size:12.5px;line-height:2}
+  ul.flat li{display:inline}
+  ul.flat li::after{content:"  ·";color:var(--faint)}
+  ul.flat li:last-child::after{content:""}
+
+  footer{
+    margin-top:28px;padding-top:10px;border-top:1px solid var(--black);
+    font-size:11px;color:var(--muted);letter-spacing:.02em;line-height:1.75;
+  }
+  footer a{color:var(--muted)}
+  footer a:hover{color:var(--ink)}
+
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="mast">
+    <div class="title">rnacos <span class="dim">/ apt repository</span></div>
+    <div class="tag">debian · ubuntu</div>
+  </header>
+
+  <p class="lede">
+    <a href="https://github.com/nacos-group/r-nacos">r-nacos</a>
+    <span class="muted">— Rust 实现的轻量 Nacos 服务。本源自动拉取上游 Release、编译为 <code>.deb</code>、GPG 签名后发布，每日跟进。</span>
+  </p>
+
+  <div class="spec">
+    <span class="k">SUITE</span> <b>stable</b><span class="sep">│</span>
+    <span class="k">ARCH</span> <b>amd64</b> · <b>arm64</b><span class="sep">│</span>
+    <span class="k">SIGNED</span> <b>yes</b><span class="sep">│</span>
+    <span class="k">VERSION</span> <b>__RNACOS_VERSION__</b><span class="sep">│</span>
+    <span class="k">BUILT</span> <b>__BUILD_DATE__</b>
+  </div>
+
+  <h2><span class="num">01</span>install</h2>
+  <div class="codeblock">
+    <div class="bar"><span class="lang">shell</span><button class="copy" id="copyBtn" type="button">copy</button></div>
+    <pre><code id="installCmd">$ sudo install -dm755 /etc/apt/keyrings
+$ curl -fsSL https://rnacos-img.qyzhg.cc/KEY.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/rnacos.gpg
+$ echo "deb [signed-by=/etc/apt/keyrings/rnacos.gpg] https://rnacos-img.qyzhg.cc stable main" | sudo tee /etc/apt/sources.list.d/rnacos.list
+$ sudo apt update
+$ sudo apt install -y rnacos
+$ sudo systemctl enable --now rnacos</code></pre>
+  </div>
+  <p class="note">命令中的域名随当前访问的源自动匹配（官方 GitHub Pages / Cloudflare 镜像均可），直接复制即可。装完由 systemd 托管、开机自启；控制台 <code>http://&lt;ip&gt;:10848/rnacos/</code>，默认账号 <code>admin/admin</code>（登录后请立即改密）。</p>
+
+  <h2><span class="num">02</span>runtime spec</h2>
+  <table class="sheet">
+    <tr><td class="k">http / grpc / console</td><td class="v">8848 / 9848 / 10848</td></tr>
+    <tr><td class="k">user</td><td class="v">rnacos</td></tr>
+    <tr><td class="k">data dir</td><td class="v">/var/lib/r-nacos/nacos_db</td></tr>
+    <tr><td class="k">restart policy</td><td class="v">on-failure</td></tr>
+  </table>
+
+  <h2><span class="num">03</span>signing key</h2>
+  <table class="sheet">
+    <tr><td class="k">key id</td><td class="v">B0411D82307F5ABB</td></tr>
+    <tr><td class="k">fingerprint</td><td class="v">2F93 F5D0 5240 2A37 497E AF9C B041 1D82 307F 5ABB</td></tr>
+    <tr><td class="k">verify</td><td class="v">curl -fsSL <span id="keyUrlTxt">…/KEY.gpg</span> | gpg --show-keys --fingerprint</td></tr>
+  </table>
+
+  <h2><span class="num">04</span>files &amp; links</h2>
+  <ul class="flat">
+    <li><a id="keyLink" href="KEY.gpg">KEY.gpg</a></li>
+    <li><a href="dists/stable/InRelease">InRelease</a></li>
+    <li><a href="dists/stable/main/binary-amd64/Packages">Packages (amd64)</a></li>
+    <li><a href="pool/main/r/rnacos/">.deb pool</a></li>
+    <li><a href="https://github.com/r-nacos/r-nacos-apt">packaging repo</a></li>
+    <li><a href="https://github.com/nacos-group/r-nacos">upstream</a></li>
+    <li><a href="https://github.com/r-nacos/r-nacos-apt#readme">docs / faq</a></li>
+  </ul>
+
+  <footer>
+    distributed via cloudflare pages + github pages · built by github actions<br>
+    r-nacos binary under upstream <a href="https://github.com/nacos-group/r-nacos/blob/main/LICENSE">apache-2.0</a>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  // 计算当前仓库根：兼容官方 GitHub Pages 的 /r-nacos-apt/ 路径前缀 与 Cloudflare 根域名。
+  var root = (location.origin + location.pathname).replace(/\/(?:index\.html)?$/i, '');
+  var keyUrl = root + '/KEY.gpg';
+  var install = [
+    'sudo install -dm755 /etc/apt/keyrings',
+    'curl -fsSL ' + keyUrl + ' | sudo gpg --dearmor -o /etc/apt/keyrings/rnacos.gpg',
+    'echo "deb [signed-by=/etc/apt/keyrings/rnacos.gpg] ' + root + ' stable main" | sudo tee /etc/apt/sources.list.d/rnacos.list',
+    'sudo apt update',
+    'sudo apt install -y rnacos',
+    'sudo systemctl enable --now rnacos'
+  ].join('\n');
+
+  // 有 JS：用真实域名渲染（带 $ 提示符）；无 JS：<code> 里的静态兜底（CF 镜像）原样可用。
+  document.getElementById('installCmd').textContent =
+    install.split('\n').map(function (l) { return '$ ' + l; }).join('\n');
+  document.getElementById('keyUrlTxt').textContent = keyUrl;
+  document.getElementById('keyLink').href = keyUrl;
+
+  var btn = document.getElementById('copyBtn');
+  btn.addEventListener('click', function () {
+    navigator.clipboard.writeText(install).then(function () {
+      btn.textContent = 'copied';
+      btn.classList.add('done');
+      setTimeout(function () { btn.textContent = 'copy'; btn.classList.remove('done'); }, 1400);
+    });
+  });
+})();
+</script>
+</body>
+</html>
