@@ -153,20 +153,25 @@ jobs:
         run: |
           gpg --armor --export > public/KEY.gpg
 
-      - name: Merge historical .deb pool from gh-pages
+      - name: Fetch gh-pages (for historical pool)
+        # 用 actions/checkout 拉 gh-pages（与镜像 job 同款，鉴权最稳；裸 git clone 在 runner 上会 128）。
+        # gh-pages 可能还没 pool（首次发布）；continue-on-error 保证失败也不阻断构建。
+        uses: actions/checkout@v5
+        with:
+          ref: gh-pages
+          path: _gh-pages
+        continue-on-error: true
+
+      - name: Merge historical .deb pool
         run: |
-          # 把 gh-pages 上累积的历史 .deb 合并进本次 public/pool/，让下面的索引登记全部版本，
-          # 这样 apt install rnacos=<旧版本> 可直接装（不只最新版）。首次发布（无 gh-pages）则跳过。
-          if ! git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
-            echo "gh-pages 尚不存在（首次发布）→ 无历史可合并。"
-            exit 0
-          fi
-          git clone --depth=1 -b gh-pages origin /tmp/gh-pages 2>/dev/null
-          if [ -d /tmp/gh-pages/pool ]; then
-            # -n(no-clobber)：绝不覆盖本次刚构建好的 .deb，只补入历史版本
-            cp -an /tmp/gh-pages/pool/. public/pool/ 2>/dev/null || true
+          # 把 gh-pages 上累积的历史 .deb 合并进本次 public/pool/，让索引登记全部版本，
+          # 这样 apt install rnacos=<旧版本> 可直接装。无历史（首次发布/拉取失败）则只索引本次。
+          if [ -d _gh-pages/pool ]; then
+            cp -an _gh-pages/pool/. public/pool/ 2>/dev/null || true   # -n: 不覆盖本次刚构建的 .deb
             echo "已合并历史 pool，当前 pool 内全部 deb："
-            ls -1 public/pool/main/r/rnacos/
+            ls -1 public/pool/main/r/rnacos/ 2>/dev/null || true
+          else
+            echo "gh-pages 无 pool（首次发布或拉取失败）→ 索引只登记本次版本。"
           fi
 
       - name: Generate APT Indexes
