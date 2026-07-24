@@ -183,6 +183,16 @@ jobs:
           gpg --yes --clearsign -o InRelease Release
           gpg --yes -abs -o Release.gpg Release
 
+      - name: Generate landing page
+        run: |
+          VERSION="${{ needs.check.outputs.version }}"
+          # 把 apt-landing/ 模板里的版本号 / 构建日期占位符替换后，落地页与 _headers 一起放进 public/
+          # 落地页里的安装命令域名由前端 JS 按当前访问的源动态生成，无需在此写死
+          sed -e "s/__RNACOS_VERSION__/${VERSION}/g" \
+              -e "s/__BUILD_DATE__/$(date -u +%Y-%m-%d)/g" \
+              apt-landing/index.html > public/index.html
+          cp apt-landing/_headers public/_headers
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
