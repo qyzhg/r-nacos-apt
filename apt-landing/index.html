@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
-<title>rnacos / apt repository</title>
+<title>rnacos / APT 软件源</title>
 <meta name="description" content="rnacos（Rust 实现的轻量 Nacos）的 Debian/Ubuntu APT 软件源，amd64/arm64，GPG 签名，每日自动跟进上游。">
 <style>
   :root{
@@ -60,7 +60,7 @@
 
   /* section headings — datasheet dividers */
   h2{
-    font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+    font-size:12px;font-weight:700;letter-spacing:.12em;
     margin:30px 0 12px;padding-bottom:5px;border-bottom:2px solid var(--black);
   }
   h2 .num{color:var(--faint);font-weight:400;margin-right:9px}
@@ -93,7 +93,7 @@
   table.sheet tr:last-child td{border-bottom:0}
   table.sheet td.k{
     color:var(--muted);width:36%;white-space:nowrap;
-    text-transform:uppercase;letter-spacing:.04em;font-size:11px;
+    letter-spacing:.02em;font-size:11.5px;
   }
   table.sheet td.v{color:var(--ink);word-break:break-all}
 
@@ -128,7 +128,7 @@
 <div class="wrap">
 
   <header class="mast">
-    <div class="title">rnacos <span class="dim">/ apt repository</span></div>
+    <div class="title">rnacos <span class="dim">/ APT 软件源</span></div>
     <div class="tag">debian · ubuntu</div>
   </header>
 
@@ -138,16 +138,16 @@
   </p>
 
   <div class="spec">
-    <span class="k">SUITE</span> <b>stable</b><span class="sep">│</span>
-    <span class="k">ARCH</span> <b>amd64</b> · <b>arm64</b><span class="sep">│</span>
-    <span class="k">SIGNED</span> <b>yes</b><span class="sep">│</span>
-    <span class="k">VERSION</span> <b>__RNACOS_VERSION__</b><span class="sep">│</span>
-    <span class="k">BUILT</span> <b>__BUILD_DATE__</b>
+    <span class="k">套件</span> <b>stable</b><span class="sep">│</span>
+    <span class="k">架构</span> <b>amd64</b> · <b>arm64</b><span class="sep">│</span>
+    <span class="k">签名</span> <b>是</b><span class="sep">│</span>
+    <span class="k">版本</span> <b>__RNACOS_VERSION__</b><span class="sep">│</span>
+    <span class="k">构建于</span> <b>__BUILD_DATE__</b>
   </div>
 
-  <h2><span class="num">01</span>install</h2>
+  <h2><span class="num">01</span>安装</h2>
   <div class="codeblock">
-    <div class="bar"><span class="lang">shell</span><button class="copy" id="copyBtn" type="button">copy</button></div>
+    <div class="bar"><span class="lang">shell</span><button class="copy" id="copyBtn" type="button">复制</button></div>
     <pre><code id="installCmd">$ sudo install -dm755 /etc/apt/keyrings
 $ curl -fsSL https://rnacos-img.qyzhg.cc/KEY.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/rnacos.gpg
 $ echo "deb [signed-by=/etc/apt/keyrings/rnacos.gpg] https://rnacos-img.qyzhg.cc stable main" | sudo tee /etc/apt/sources.list.d/rnacos.list
@@ -157,39 +157,39 @@ $ sudo systemctl enable --now rnacos</code></pre>
   </div>
   <p class="note">命令中的域名随当前访问的源自动匹配（官方 GitHub Pages / Cloudflare 镜像均可），直接复制即可。装完由 systemd 托管、开机自启；控制台 <code>http://&lt;ip&gt;:10848/rnacos/</code>，默认账号 <code>admin/admin</code>（登录后请立即改密）。</p>
 
-  <h2><span class="num">02</span>available versions</h2>
+  <h2><span class="num">02</span>可用版本</h2>
   <table class="vers"><tbody id="versionRows"></tbody></table>
-  <p id="versionStatus">loading…</p>
+  <p id="versionStatus">加载中…</p>
 
-  <h2><span class="num">03</span>runtime spec</h2>
+  <h2><span class="num">03</span>运行参数</h2>
   <table class="sheet">
-    <tr><td class="k">http / grpc / console</td><td class="v">8848 / 9848 / 10848</td></tr>
-    <tr><td class="k">user</td><td class="v">rnacos</td></tr>
-    <tr><td class="k">data dir</td><td class="v">/var/lib/r-nacos/nacos_db</td></tr>
-    <tr><td class="k">restart policy</td><td class="v">on-failure</td></tr>
+    <tr><td class="k">HTTP / gRPC / 控制台</td><td class="v">8848 / 9848 / 10848</td></tr>
+    <tr><td class="k">运行用户</td><td class="v">rnacos</td></tr>
+    <tr><td class="k">数据目录</td><td class="v">/var/lib/r-nacos/nacos_db</td></tr>
+    <tr><td class="k">重启策略</td><td class="v">on-failure</td></tr>
   </table>
 
-  <h2><span class="num">04</span>signing key</h2>
+  <h2><span class="num">04</span>签名公钥</h2>
   <table class="sheet">
-    <tr><td class="k">key id</td><td class="v">B0411D82307F5ABB</td></tr>
-    <tr><td class="k">fingerprint</td><td class="v">2F93 F5D0 5240 2A37 497E AF9C B041 1D82 307F 5ABB</td></tr>
-    <tr><td class="k">verify</td><td class="v">curl -fsSL <span id="keyUrlTxt">…/KEY.gpg</span> | gpg --show-keys --fingerprint</td></tr>
+    <tr><td class="k">密钥 ID</td><td class="v">B0411D82307F5ABB</td></tr>
+    <tr><td class="k">指纹</td><td class="v">2F93 F5D0 5240 2A37 497E AF9C B041 1D82 307F 5ABB</td></tr>
+    <tr><td class="k">校验</td><td class="v">curl -fsSL <span id="keyUrlTxt">…/KEY.gpg</span> | gpg --show-keys --fingerprint</td></tr>
   </table>
 
-  <h2><span class="num">05</span>files &amp; links</h2>
+  <h2><span class="num">05</span>文件与链接</h2>
   <ul class="flat">
-    <li><a id="keyLink" href="KEY.gpg">KEY.gpg</a></li>
-    <li><a href="dists/stable/InRelease">InRelease</a></li>
+    <li><a id="keyLink" href="KEY.gpg">KEY.gpg 公钥</a></li>
+    <li><a href="dists/stable/InRelease">InRelease 索引</a></li>
     <li><a href="dists/stable/main/binary-amd64/Packages">Packages (amd64)</a></li>
-    <li><a href="pool/main/r/rnacos/">.deb pool</a></li>
-    <li><a href="https://github.com/r-nacos/r-nacos-apt">packaging repo</a></li>
-    <li><a href="https://github.com/nacos-group/r-nacos">upstream</a></li>
-    <li><a href="https://github.com/r-nacos/r-nacos-apt#readme">docs / faq</a></li>
+    <li><a href="pool/main/r/rnacos/">.deb 文件池</a></li>
+    <li><a href="https://github.com/r-nacos/r-nacos-apt">打包仓库</a></li>
+    <li><a href="https://github.com/nacos-group/r-nacos">上游项目</a></li>
+    <li><a href="https://github.com/r-nacos/r-nacos-apt#readme">文档 / 常见问题</a></li>
   </ul>
 
   <footer>
-    distributed via cloudflare pages + github pages · built by github actions<br>
-    r-nacos binary under upstream <a href="https://github.com/nacos-group/r-nacos/blob/main/LICENSE">apache-2.0</a>
+    由 Cloudflare Pages 与 GitHub Pages 双发分发 · GitHub Actions 构建<br>
+    r-nacos 二进制遵循上游 <a href="https://github.com/nacos-group/r-nacos/blob/main/LICENSE">apache-2.0</a>
   </footer>
 
 </div>
@@ -217,9 +217,9 @@ $ sudo systemctl enable --now rnacos</code></pre>
   var btn = document.getElementById('copyBtn');
   btn.addEventListener('click', function () {
     navigator.clipboard.writeText(install).then(function () {
-      btn.textContent = 'copied';
+      btn.textContent = '已复制';
       btn.classList.add('done');
-      setTimeout(function () { btn.textContent = 'copy'; btn.classList.remove('done'); }, 1400);
+      setTimeout(function () { btn.textContent = '复制'; btn.classList.remove('done'); }, 1400);
     });
   });
 
@@ -248,19 +248,19 @@ $ sudo systemctl enable --now rnacos</code></pre>
             '<td class="v">' + v + '</td>' +
             '<td class="deb"><a href="' + root + '/pool/main/r/rnacos/rnacos_' + v + '_amd64.deb">amd64</a> · ' +
             '<a href="' + root + '/pool/main/r/rnacos/rnacos_' + v + '_arm64.deb">arm64</a></td>' +
-            '<td class="inst"><button class="copy" data-ver="' + v + '" type="button">apt install</button></td>';
+            '<td class="inst"><button class="copy" data-ver="' + v + '" type="button">复制安装命令</button></td>';
           tbody.appendChild(tr);
         });
         Array.prototype.forEach.call(tbody.querySelectorAll('button.copy'), function (b) {
           b.addEventListener('click', function () {
             navigator.clipboard.writeText('sudo apt install rnacos=' + b.dataset.ver).then(function () {
-              var old = b.textContent; b.textContent = 'copied'; b.classList.add('done');
+              var old = b.textContent; b.textContent = '已复制'; b.classList.add('done');
               setTimeout(function () { b.textContent = old; b.classList.remove('done'); }, 1400);
             });
           });
         });
       })
-      .catch(function () { status.textContent = '(索引加载失败 — 直接看下面的 Packages 文件)'; });
+      .catch(function () { status.textContent = '(索引加载失败 — 直接看下面的 Packages 索引)'; });
   }
   loadVersions(root);
 })();
