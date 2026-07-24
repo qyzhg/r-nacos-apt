@@ -1,14 +1,14 @@
 Package: rnacos
-Version: 0.8.5+667c20f
+Version: 0.8.5+633e229
 Architecture: arm64
 Maintainer: qyzhg <qyzhg@qyzhg.com>
 Conflicts: r-nacos
 Replaces: r-nacos
-Filename: pool/main/r/rnacos/rnacos_0.8.5+667c20f_arm64.deb
-Size: 11668246
-MD5sum: b3448a12127ed24e55b4537675a83bf6
-SHA1: d850f0b0732398bbff638bd74b39745210aed7f8
-SHA256: 4dd445e18e6e5fccea8145a3448a7eb67a45550d503ce1f4af08423ab65f217e
+Filename: pool/main/r/rnacos/rnacos_0.8.5+633e229_arm64.deb
+Size: 11652586
+MD5sum: d3a4552435d37832a2e41df66c97eb33
+SHA1: 8ad9158db37f11d7e1c78a9945f283dbce3a83ef
+SHA256: f8fcf2b880f064fcec564bb50c655e15417ea04d1aad91a11bf5bc214e6ae254
 Section: net
 Priority: optional
 Description: Rapid Nacos server implementation in Rust.
