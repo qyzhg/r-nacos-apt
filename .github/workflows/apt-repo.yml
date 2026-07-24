@@ -199,7 +199,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read            # 只需读 gh-pages；CF 上传走 CF API Token，不依赖 GITHUB_TOKEN 权限
-    if: ${{ needs.build-apt.result == 'success' && secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
+    # GitHub Actions 限制：if 条件（job/step 级都是）里一律不能引用 secrets，否则报 Unrecognized named-value: 'secrets'。
+    # 所以不做「secret 是否配置」的预判，改用 continue-on-error 兜底：CF 端失败 / secret 缺失都只显示黄色警告，
+    # 整个 workflow 仍判绿，主流程（GitHub Pages）不受影响。
+    if: ${{ needs.build-apt.result == 'success' }}
     steps:
       - name: Checkout full gh-pages (cumulative)
         uses: actions/checkout@v4
