@@ -2,7 +2,9 @@ name: Update APT Repository
 
 on:
   schedule:
-    - cron: '0 2 * * *' # 每天 UTC 02:00 自动运行
+    # GitHub Actions 的 cron 一律按 UTC 解释。北京时间为 UTC+8，
+    # 所以北京时间 12:34:56 → UTC 04:34:56。
+    - cron: '56 4 * * *' # 北京时间每天 12:34:56 自动运行
   workflow_dispatch: # 支持在 Actions 界面手动点击触发
     inputs:
       force:

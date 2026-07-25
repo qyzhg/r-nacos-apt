@@ -12,12 +12,14 @@
 
 ## ✨ 特性
 
-- 🔄 **每日自动更新**：UTC 02:00 定时检查上游 Release，有新版本即自动编译发版。
+- 🔄 **每日自动更新**：北京时间每天 **12:34:56** 定时检查上游 Release，有新版本即自动编译发版；无新版则跳过构建，省时省钱。
+- 🗂️ **历史版本可装**：pool 累积保留全部历史 `.deb` 并一并登记进索引，`apt install rnacos=<版本>` 可直接装任意旧版本（不再只能装最新）。
 - 🔏 **GPG 签名**：所有 `Release` / `InRelease` 索引均经签名，`apt` 可校验完整性。
 - 📦 **零依赖二进制**：由 `cargo build --release` 产出静态精简二进制，安装即用。
 - 🖥️ **双架构**：同时构建 `amd64` 与 `arm64`(aarch64) 两套 `.deb`，x86 服务器与 ARM（树莓派、AWS Graviton 等）都能直接装。
 - 🔌 **内置 systemd 服务**：`.deb` 自带 unit 与安装脚本，`apt install` 即自动注册、开机自启并运行，无需手动配置。
-- 🚀 **手动触发**：在 Actions 页面可随时 `workflow_dispatch` 手动重建。
+- 🇨🇳 **国内镜像**：构建后自动镜像到 Cloudflare Pages，给大陆用户提供加速源（best-effort，失败不影响主流程）。
+- 🚀 **手动触发**：在 Actions 页面可随时 `workflow_dispatch` 手动重建（支持勾选 `force` 强制覆盖重建已发版本）。
 - 🧩 **标准 APT 布局**：`pool/` + `dists/stable/main/binary-amd64/`，兼容所有 `apt` 客户端。
 
 ---
@@ -97,7 +99,7 @@ https://cdn.jsdelivr.net/gh/r-nacos/r-nacos-apt@gh-pages
 
 ## 🔄 更新 rnacos
 
-本仓库每天 UTC 02:00 自动拉取上游最新版本并重新打包，所以「更新」就是刷新 apt 索引后升级。
+本仓库北京时间每天 12:34:56 自动拉取上游最新版本并重新打包，所以「更新」就是刷新 apt 索引后升级。
 
 ### 常规更新
 
@@ -116,14 +118,24 @@ apt list -a rnacos               # 仓库中可用的版本（apt update 之后�
 
 ### 更新须知
 
-- **新版本还没出现？** 上游刚发布的 release，本仓库最快次日 UTC 02:00 之后才入库。急着用可去 [Actions 页面](https://github.com/r-nacos/r-nacos-apt/actions/workflows/apt-repo.yml) 手动点一次 `Run workflow` 立即触发。
+- **新版本还没出现？** 上游刚发布的 release，本仓库最快次日北京时间 12:34:56 之后才入库。急着用可去 [Actions 页面](https://github.com/r-nacos/r-nacos-apt/actions/workflows/apt-repo.yml) 手动点一次 `Run workflow` 立即触发。
 - **数据与配置不会丢。** 你的数据目录（`/var/lib/r-nacos`）和 `systemctl edit` 的 drop-in 配置都不在包里，`apt upgrade` 只更新二进制与 unit，不会动你的数据与自定义配置。
 - **升级前建议备份。** 跨大版本升级时，推荐先备份 r-nacos 的数据目录再执行升级，方便回滚。
 
 <details>
 <summary><b>需要回滚到旧版本？</b></summary>
 
-APT 索引只登记最新版本，`apt install rnacos=<旧版本号>` 通常会报 "not found"。但历史 `.deb` 仍保留在 pool 里，可直接用 `dpkg -i` 安装指定版本：
+每次构建都会把 gh-pages 上累积的历史 `.deb` 合并进 pool，并用 `--multiversion` 一并登记进索引，所以可以直接用 `apt` 安装任意旧版本（无需手动下载 `.deb`）：
+
+```bash
+# 先看仓库里都有哪些版本（apt update 之后）
+apt list -a rnacos
+
+# 安装指定旧版本
+sudo apt install rnacos=0.8.4
+```
+
+若想跳过 apt、直接下载某个历史 `.deb`，也可手动安装：
 
 ```bash
 # 将 <version> 与 <arch> 替换为你需要的值，例如 0.8.4 / amd64
@@ -280,31 +292,38 @@ BOCoTQ7Hvg/w3+bk/XBUDFFbJHuOVrDFN/pl7QmZKwwktWxgD2wIZeHxINmG+Sg6
 
 ## ⚙️ 工作原理
 
-本仓库只有一个核心文件：[`.github/workflows/apt-repo.yml`](.github/workflows/apt-repo.yml)。它定义了一条完整流水线：
+本仓库只有一个核心文件：[`.github/workflows/apt-repo.yml`](.github/workflows/apt-repo.yml)。它定义了一条由三个 job 串起的流水线：
 
 ```
-GitHub Actions 定时触发 (UTC 02:00)
+GitHub Actions 定时触发（北京时间 12:34:56）/ 手动 workflow_dispatch
         │
         ▼
- ① 获取上游最新 release tag          (nacos-group/r-nacos)
-        │
+┌──────────────────────────────────────────────────────────────┐
+│ Job ①  check —— 探测上游版本 · 跳过未变更（极低成本）           │
+│   · 拉取 nacos-group/r-nacos 最新 release tag                  │
+│   · 查 gh-pages 是否已发布该版本（amd64 + arm64 都在才算已发布） │
+│   · 已发布 → skip=true，本日不构建（仅两次 API 请求）           │
+└──────────────────────────────────────────────────────────────┘
+        │  版本有更新 / 手动勾选 force
         ▼
- ② checkout 对应版本源码
-        │
+┌──────────────────────────────────────────────────────────────┐
+│ Job ②  build-apt —— 全量编译 · 打包 · 发布                      │
+│   · checkout 对应版本源码 + 导入 GPG 私钥                       │
+│   · cargo build --release（amd64 原生 + arm64 交叉编译）        │
+│   · 打包 .deb → public/pool/.../（dpkg-deb，自带 systemd unit） │
+│   · 拉取 gh-pages 历史 pool，合并累积全部历史 .deb              │
+│   · dpkg-scanpackages --multiversion 生成各架构 Packages 索引   │
+│   · apt-ftparchive 生成 Release + GPG 签名（InRelease/Release.gpg）│
+│   · 生成落地页 index.html                                       │
+│   · 部署到 GitHub Pages（keep_files 保留历史）                  │
+└──────────────────────────────────────────────────────────────┘
+        │  build 成功
         ▼
- ③ cargo build --release             (amd64 原生 + arm64 交叉编译)
-        │
-        ▼
- ④ 打包 .deb → public/pool/.../     (dpkg-deb)
-        │
-        ▼
- ⑤ 导出公钥 + 生成索引               (dpkg-scanpackages / apt-ftparchive)
-        │
-        ▼
- ⑥ GPG 签名 Release                  (InRelease / Release.gpg)
-        │
-        ▼
- ⑦ 部署到 GitHub Pages               (peaceiris/actions-gh-pages)
+┌──────────────────────────────────────────────────────────────┐
+│ Job ③  mirror-to-cloudflare —— 镜像到 Cloudflare Pages（best-effort）│
+│   · 把累积的 gh-pages 整体镜像到 Cloudflare Pages，给大陆用户加速 │
+│   · 仅 contents:read 最小权限；失败只发黄色警告，不影响主流程    │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ### 发布后的仓库结构
@@ -312,7 +331,7 @@ GitHub Actions 定时触发 (UTC 02:00)
 ```
 https://r-nacos.github.io/r-nacos-apt/
 ├── KEY.gpg                                  # 公钥（ASCII 装甲）
-├── pool/main/r/rnacos/
+├── pool/main/r/rnacos/                         # 累积保留全部历史版本
 │   ├── rnacos_<version>_amd64.deb          # x86_64 安装包
 │   └── rnacos_<version>_arm64.deb          # aarch64 安装包
 └── dists/stable/
@@ -331,8 +350,8 @@ https://r-nacos.github.io/r-nacos-apt/
 
 | 方式 | 说明 |
 | --- | --- |
-| `schedule` | `cron: '0 2 * * *'`，每天 UTC 02:00 自动运行 |
-| `workflow_dispatch` | 在 [Actions 页面](https://github.com/r-nacos/r-nacos-apt/actions/workflows/apt-repo.yml) 手动点击 `Run workflow` |
+| `schedule` | `cron: '56 4 * * *'`，北京时间每天 **12:34:56** 自动运行（= UTC 04:34:56） |
+| `workflow_dispatch` | 在 [Actions 页面](https://github.com/r-nacos/r-nacos-apt/actions/workflows/apt-repo.yml) 手动点击 `Run workflow`；可勾选 `force` 强制重建已发版本 |
 
 ---
 
@@ -347,7 +366,7 @@ echo "deb https://r-nacos.github.io/r-nacos-apt stable main" | sudo tee /etc/apt
 ```
 
 **Q：安装的版本不是最新？**
-流水线每天 UTC 02:00 才检查上游。手动到 Actions 页面触发一次 `Run workflow` 即可立即重建，或等待次日自动更新。
+流水线每天北京时间 12:34:56 才检查上游。手动到 Actions 页面触发一次 `Run workflow` 即可立即重建，或等待次日自动更新。
 
 **Q：支持哪些架构？**
 同时支持 `amd64` 与 `arm64`(aarch64)。`apt` 会根据本机 CPU 架构自动选取对应的 `.deb`，无需在源行里指定 `arch=`。
