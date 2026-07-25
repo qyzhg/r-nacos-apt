@@ -292,39 +292,51 @@ BOCoTQ7Hvg/w3+bk/XBUDFFbJHuOVrDFN/pl7QmZKwwktWxgD2wIZeHxINmG+Sg6
 
 ## ⚙️ 工作原理
 
-本仓库只有一个核心文件：[`.github/workflows/apt-repo.yml`](.github/workflows/apt-repo.yml)。它定义了一条由三个 job 串起的流水线：
+本仓库只有一个核心文件：[`.github/workflows/apt-repo.yml`](.github/workflows/apt-repo.yml)。它定义了一条由三个 job 串起的流水线（GitHub 会把下图渲染成流程图）：
 
+```mermaid
+flowchart TD
+    TRIG["⏰ 触发：定时（北京时间每天 12:34:56）<br/>或手动 workflow_dispatch（可勾选 force）"]
+
+    subgraph JOB1["Job ① check — 探测上游版本 · 极低成本"]
+        C1["拉取 nacos-group/r-nacos 最新 release tag"]
+        C2["查 gh-pages 是否已发布该版本<br/>（amd64 + arm64 都在才算已发布）"]
+        C1 --> C2
+    end
+
+    DEC{"已发布该版本？<br/>勾选 force 时跳过检查"}
+    SKIP(["本日不构建<br/>（仅两次 API 请求）"])
+
+    subgraph JOB2["Job ② build-apt — 全量编译 · 打包 · 发布"]
+        B1["checkout 源码 + 导入 GPG 私钥"]
+        B2["cargo build --release<br/>amd64 原生 + arm64 交叉编译"]
+        B3["打包 .deb → public/pool/<br/>自带 systemd unit"]
+        B4["合并 gh-pages 历史 pool<br/>累积全部历史 .deb"]
+        B5["--multiversion 生成各架构 Packages 索引"]
+        B6["apt-ftparchive 生成 Release<br/>+ GPG 签名 InRelease / Release.gpg"]
+        B7["生成落地页 index.html"]
+        B8["部署到 GitHub Pages（保留历史）"]
+        B1 --> B2 --> B3 --> B4 --> B5 --> B6 --> B7 --> B8
+    end
+
+    subgraph JOB3["Job ③ mirror-to-cloudflare — best-effort"]
+        CF["镜像 gh-pages 到 Cloudflare Pages · 大陆加速<br/>仅 contents:read · 失败只发警告，不阻断主流程"]
+    end
+
+    TRIG --> C1
+    C2 --> DEC
+    DEC -- "是 → skip" --> SKIP
+    DEC -- "否 / force" --> B1
+    B8 --> CF
 ```
-GitHub Actions 定时触发（北京时间 12:34:56）/ 手动 workflow_dispatch
-        │
-        ▼
-┌──────────────────────────────────────────────────────────────┐
-│ Job ①  check —— 探测上游版本 · 跳过未变更（极低成本）           │
-│   · 拉取 nacos-group/r-nacos 最新 release tag                  │
-│   · 查 gh-pages 是否已发布该版本（amd64 + arm64 都在才算已发布） │
-│   · 已发布 → skip=true，本日不构建（仅两次 API 请求）           │
-└──────────────────────────────────────────────────────────────┘
-        │  版本有更新 / 手动勾选 force
-        ▼
-┌──────────────────────────────────────────────────────────────┐
-│ Job ②  build-apt —— 全量编译 · 打包 · 发布                      │
-│   · checkout 对应版本源码 + 导入 GPG 私钥                       │
-│   · cargo build --release（amd64 原生 + arm64 交叉编译）        │
-│   · 打包 .deb → public/pool/.../（dpkg-deb，自带 systemd unit） │
-│   · 拉取 gh-pages 历史 pool，合并累积全部历史 .deb              │
-│   · dpkg-scanpackages --multiversion 生成各架构 Packages 索引   │
-│   · apt-ftparchive 生成 Release + GPG 签名（InRelease/Release.gpg）│
-│   · 生成落地页 index.html                                       │
-│   · 部署到 GitHub Pages（keep_files 保留历史）                  │
-└──────────────────────────────────────────────────────────────┘
-        │  build 成功
-        ▼
-┌──────────────────────────────────────────────────────────────┐
-│ Job ③  mirror-to-cloudflare —— 镜像到 Cloudflare Pages（best-effort）│
-│   · 把累积的 gh-pages 整体镜像到 Cloudflare Pages，给大陆用户加速 │
-│   · 仅 contents:read 最小权限；失败只发黄色警告，不影响主流程    │
-└──────────────────────────────────────────────────────────────┘
-```
+
+**流水线要点：**
+
+| Job | 作用 | 关键点 |
+| --- | --- | --- |
+| ① `check` | 探测上游版本、判断是否已发布 | 仅两次 GitHub API 请求；已发布则 `skip`，不触发昂贵的全量构建 |
+| ② `build-apt` | 编译、打包、签名、发布 | 合并 gh-pages 上累积的全部历史 `.deb`，并用 `--multiversion` 登记进索引，故 `apt install rnacos=<版本>` 可装任意旧版本 |
+| ③ `mirror-to-cloudflare` | 镜像到 Cloudflare Pages | 单独 job + 仅 `contents:read`，把最敏感的 CF Token 关在最小权限里；失败不影响主流程 |
 
 ### 发布后的仓库结构
 
