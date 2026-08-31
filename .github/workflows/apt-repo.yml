@@ -28,9 +28,24 @@ jobs:
     steps:
       - name: Fetch Latest r-nacos Release Tag
         id: get_release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # 获取官方最新 release tag (如 v0.8.5)
-          LATEST_TAG=$(curl -s https://api.github.com/repos/nacos-group/r-nacos/releases/latest | jq -r .tag_name)
+          # 必须带鉴权：runner 出口 IP 是共享的，匿名调 api.github.com 极易撞上 60 次/小时的限流；
+          # 限流返回的 JSON 没有 tag_name 字段，jq 会原样输出字符串 "null"，
+          # 这个 "null" 传到 build-apt 的 checkout ref 就是日志里 ref: null → fetch 失败的根源。
+          # （读公开仓库 GITHUB_TOKEN 也能过鉴权，与下面 check_deb 的用法保持一致）
+          LATEST_TAG=$(curl -s --retry 3 \
+            -H "Authorization: token ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/nacos-group/r-nacos/releases/latest | jq -r .tag_name)
+          # 兜底校验：拿不到 tag 就让本 job 直接失败并给出明确报错，
+          # 而不是把 "null" 当版本号传给下游（下游会拿 rnacos_null 去查 deb、拿 ref:null 去 checkout）。
+          if [ -z "$LATEST_TAG" ] || [ "$LATEST_TAG" = "null" ]; then
+            echo "::error::获取上游最新 release tag 失败（得到: '${LATEST_TAG}'），可能是 API 限流或上游无正式 release。"
+            exit 1
+          fi
           echo "tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
           # 去掉 tag 前面的 v 字母，用纯上游版本号作为包版本（如 0.8.5）。
           # 这样 apt install rnacos=0.8.5 能精确匹配历史版本。
